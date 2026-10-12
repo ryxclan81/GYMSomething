@@ -7,6 +7,7 @@ test("field help works in onboarding and Escape keeps the setup open", async ({
   page,
 }) => {
   await page.goto("/");
+  await page.getByRole("button", { name: "Get started", exact: true }).click();
   await expect(page).toHaveTitle("Setwise · Your training journal");
   const welcome = page.getByRole("dialog", { name: "Welcome to Setwise" });
   await welcome
@@ -42,7 +43,7 @@ test.describe("phone touch help", () => {
     const nutrition = page.locator(".settings-tools input.toggle").first();
     await expect(nutrition).not.toBeChecked();
     await page
-      .locator(".app-header")
+      .locator(".settings-page .page-header")
       .getByRole("button", { name: "Explain controls", exact: true })
       .click();
     await nutrition.tap();
@@ -147,19 +148,30 @@ function luminance(rgb: string) {
   return values[0] * 0.2126 + values[1] * 0.7152 + values[2] * 0.0722;
 }
 
-test("mouse and keyboard help describe controls without opening their screens", async ({ page }) => {
+test("mouse and keyboard help describe controls without opening their screens", async ({
+  page,
+}) => {
   await quickOnboard(page);
   const header = page.locator(".app-header");
-  const settings = header.getByRole("button", { name: "Settings", exact: true });
+  const settings = header.getByRole("button", {
+    name: "Settings",
+    exact: true,
+  });
   await settings.hover();
-  await expect(page.getByRole("tooltip")).toContainText("Change your preferences");
+  await expect(page.getByRole("tooltip")).toContainText(
+    "Change your preferences",
+  );
   await expect(settings).toHaveAttribute("aria-describedby", /setwise-help/);
   await page.keyboard.press("Escape");
   await expect(page.getByRole("tooltip")).not.toBeVisible();
-  await header.getByRole("button", { name: "Explain controls", exact: true }).focus();
+  await header
+    .getByRole("button", { name: "Setwise home", exact: true })
+    .focus();
   await page.keyboard.press("Tab");
   await expect(settings).toBeFocused();
-  await expect(page.getByRole("tooltip")).toContainText("Change your preferences");
+  await expect(page.getByRole("tooltip")).toContainText(
+    "Change your preferences",
+  );
   await page.keyboard.press("Escape");
   await expect(settings).toBeFocused();
   await expect(page.getByRole("heading", { name: /Good / })).toBeVisible();
@@ -171,7 +183,7 @@ test("checked controls keep visible contrast for every accent", async ({
   await quickOnboard(page);
   const data = await persisted(page);
   data.profile.nutrition = true;
-  for (const accent of ["steel", "violet", "neutral"] as const) {
+  for (const accent of ["sage", "steel", "violet", "neutral"] as const) {
     data.profile.accent = accent;
     await writeData(page, data);
     await page

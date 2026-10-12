@@ -16,9 +16,22 @@ export function SetwiseMark({ size = 30 }: { size?: number }) {
   );
 }
 
-export function Brand() {
+export function Brand({ onHome }: { onHome?: () => void }) {
+  if (onHome)
+    return (
+      <button
+        type="button"
+        className="brand brand-home"
+        translate="no"
+        aria-label="Setwise home"
+        onClick={onHome}
+      >
+        <SetwiseMark />
+        <span>setwise</span>
+      </button>
+    );
   return (
-    <div className="brand">
+    <div className="brand" translate="no">
       <SetwiseMark />
       <span>setwise</span>
     </div>

@@ -497,11 +497,35 @@ test("workout overview opens a persistent focused exercise and preserves clearab
   await seconds.fill("");
   await expect(seconds).toHaveValue("");
   await seconds.fill("45");
-  await choose(
+  await expect(
     formControl(page, `${hold.exercise.name} set 1 type`),
+  ).toHaveCount(0);
+  await page
+    .getByRole("button", {
+      name: `Edit set 1 type for ${hold.exercise.name}`,
+      exact: true,
+    })
+    .click();
+  const setOptions = page.getByRole("dialog", {
+    name: hold.exercise.name,
+    exact: true,
+  });
+  await choose(
+    formControl(setOptions, "Set 1 category", { exact: true }),
+    "Warm-up",
+    true,
+  );
+  expect(
+    (await persisted(page)).activeSession!.exercises.find(
+      (entry) => entry.id === hold.id,
+    )!.sets[0].type,
+  ).toBe("warmup");
+  await choose(
+    formControl(setOptions, "Set 1 category", { exact: true }),
     "Timed",
     true,
   );
+  await setOptions.getByRole("button", { name: "Close", exact: true }).click();
   await page
     .getByRole("button", {
       name: `Complete ${hold.exercise.name} set 1`,

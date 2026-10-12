@@ -42,6 +42,16 @@ import {
   makeSet,
   validateSet,
 } from "../domain/session";
+import {
+  pauseSetTimer,
+  resetSetTimer,
+  resumeSetTimer,
+  startSetTimer,
+  timerActualSeconds,
+  timerElapsedMs,
+  timerRemainingSeconds,
+  type SetTimer,
+} from "../domain/timer";
 import { dateKey, formatTime, id } from "../domain/helpers";
 import { Button, Field, IconButton, Sheet, toast } from "../components/ui";
 import { Library } from "./Library";
@@ -143,6 +153,7 @@ export default function Workout({
     [annotation, setAnnotation] = useState(session.annotation ?? "");
   const speechStop = useRef<(() => void) | null>(null);
   const rang = useRef(false);
+  const timedRang = useRef<string | null>(null);
   const focused = session.exercises.find(
     (e) => e.id === session.focusedExerciseId,
   );
@@ -167,6 +178,22 @@ export default function Workout({
   const rest = session.restEndsAt
     ? Math.max(0, Math.ceil((session.restEndsAt - Date.now()) / 1000))
     : (session.restPausedSeconds ?? 0);
+  const activeSetTimer = history ? undefined : session.setTimer;
+  useEffect(() => {
+    if (
+      activeSetTimer?.startedAt !== undefined &&
+      activeSetTimer.mode === "countdown" &&
+      activeSetTimer.targetSeconds > 0 &&
+      timerRemainingSeconds(activeSetTimer, now) === 0 &&
+      timedRang.current !== activeSetTimer.setId
+    ) {
+      timedRang.current = activeSetTimer.setId;
+      toast("Target time reached. Finish the set when you stop.");
+      navigator.vibrate?.(80);
+    }
+    if (!activeSetTimer || timerRemainingSeconds(activeSetTimer, now) > 0)
+      timedRang.current = null;
+  }, [activeSetTimer, now]);
   useEffect(() => {
     if (session.restEndsAt && rest === 0 && !rang.current) {
       rang.current = true;
@@ -180,7 +207,22 @@ export default function Workout({
       const target = history
         ? d.sessions.find((s) => s.id === session.id)
         : d.activeSession;
-      if (target) change(target);
+      if (target) {
+        change(target);
+        const timer = target.setTimer;
+        if (
+          timer &&
+          !target.exercises.some(
+            (exercise) =>
+              exercise.id === timer.exerciseId &&
+              exercise.sets.some(
+                (set) =>
+                  set.id === timer.setId && !set.completed && !set.skipped,
+              ),
+          )
+        )
+          target.setTimer = undefined;
+      }
     }).catch(() => {});
   }
   function focusExercise(exerciseId?: string) {
@@ -227,8 +269,17 @@ export default function Workout({
     ) ??
     session.exercises.at(-1);
   function toggleSet(exercise: SessionExercise, set: WorkoutSet) {
+    const timer =
+      !set.completed &&
+      activeSetTimer?.exerciseId === exercise.id &&
+      activeSetTimer.setId === set.id
+        ? activeSetTimer
+        : undefined;
+    const actualSet = timer
+      ? { ...set, durationSeconds: timerActualSeconds(timer) }
+      : set;
     if (!set.completed) {
-      const error = validateSet(set, exercise.exercise);
+      const error = validateSet(actualSet, exercise.exercise);
       if (error) {
         toast(error);
         return;
@@ -239,6 +290,10 @@ export default function Workout({
         .find((e) => e.id === exercise.id)
         ?.sets.find((x) => x.id === set.id);
       if (!target) return;
+      if (timer) {
+        target.durationSeconds = actualSet.durationSeconds;
+        s.setTimer = undefined;
+      }
       target.completed = !target.completed;
       target.skipped = false;
       target.completedAt = target.completed
@@ -306,6 +361,21 @@ export default function Workout({
   }
   async function save() {
     if (
+      activeSetTimer &&
+      (activeSetTimer.startedAt !== undefined ||
+        timerElapsedMs(activeSetTimer) > 0)
+    ) {
+      toast(
+        "Finish or reset your current set timer before saving the workout.",
+      );
+      const entry = session.exercises.find(
+        (exercise) => exercise.id === activeSetTimer.exerciseId,
+      );
+      if (entry) focusExercise(entry.id);
+      setFinish(false);
+      return;
+    }
+    if (
       !session.exercises.some((e) =>
         e.sets.some((s) => s.completed && !s.skipped),
       )
@@ -332,6 +402,7 @@ export default function Workout({
         s.notes = notes;
         s.difficulty = difficulty;
         s.annotation = annotation;
+        s.setTimer = undefined;
         const isNew = completeSession(d, s);
         completed = d.sessions.find((x) => x.id === s.id);
         if (!isNew) {
@@ -706,6 +777,29 @@ export default function Workout({
           <p className="muted">Add your first exercise to begin logging.</p>
         </div>
       )}
+      {activeSetTimer && activeSetTimer.exerciseId !== focused?.id && (
+        <div className="hold-timer">
+          <div className="hold-timer-display">
+            <span className="small">
+              Set timer ·{" "}
+              {
+                session.exercises.find(
+                  (exercise) => exercise.id === activeSetTimer.exerciseId,
+                )?.exercise.name
+              }
+            </span>
+            <strong>
+              {formatTime(timerElapsedMs(activeSetTimer, now) / 1000)}
+            </strong>
+          </div>
+          <Button
+            variant="secondary"
+            onClick={() => focusExercise(activeSetTimer.exerciseId)}
+          >
+            Return to timer
+          </Button>
+        </div>
+      )}
       {session.exercises
         .filter((entry) => entry.id === focused?.id)
         .map((entry) => {
@@ -758,7 +852,7 @@ export default function Workout({
                 </div>
               )}
               <div
-                className={`set-grid set-head ${data.profile.effort !== "none" && !timed ? "with-effort" : ""}`}
+                className={`set-grid set-head ${!loaded && !cardio ? "set-basic" : ""} ${data.profile.effort !== "none" && !timed ? "with-effort" : ""}`}
               >
                 <span>SET</span>
                 <span>
@@ -770,9 +864,7 @@ export default function Workout({
                       ? data.profile.unit.toUpperCase()
                       : "REPS"}
                 </span>
-                <span>
-                  {timed ? (cardio ? "KM" : "TYPE") : loaded ? "REPS" : "TYPE"}
-                </span>
+                {(loaded || cardio) && <span>{cardio ? "KM" : "REPS"}</span>}
                 {data.profile.effort !== "none" && !timed && (
                   <span>
                     <HelpText
@@ -786,144 +878,184 @@ export default function Workout({
               </div>
               {entry.sets.map((set, si) => (
                 <div
-                  className={`set-grid ${set.completed ? "set-complete" : ""} ${set.skipped ? "set-skipped" : ""} ${si === pendingSet ? "set-current" : ""} ${data.profile.effort !== "none" && !timed ? "with-effort" : ""}`}
                   key={set.id}
+                  className={timed ? "timed-set-block" : undefined}
                 >
-                  <button
-                    className="set-number"
-                    aria-label={`Edit set ${si + 1} type for ${ex.name}`}
-                    onClick={() => {
-                      setActions(entry.id);
-                    }}
+                  <div
+                    className={`set-grid ${!loaded && !cardio ? "set-basic" : ""} ${set.completed ? "set-complete" : ""} ${set.skipped ? "set-skipped" : ""} ${si === pendingSet ? "set-current" : ""} ${data.profile.effort !== "none" && !timed ? "with-effort" : ""}`}
                   >
-                    {set.type === "warmup" ? "W" : si + 1}
-                  </button>
-                  <NumericInput
-                    aria-label={`${ex.name} set ${si + 1} ${timed ? (cardio ? "minutes" : "duration in seconds") : loaded ? "weight" : "reps"}`}
-                    inputMode="decimal"
-                    min="0"
-                    step={cardio || loaded ? 0.1 : 1}
-                    value={
-                      timed
-                        ? cardio
-                          ? Math.round((set.durationSeconds / 60) * 100) / 100
-                          : set.durationSeconds
-                        : loaded
-                          ? Math.round(
-                              fromKg(set.weightKg, data.profile.unit) * 100,
-                            ) / 100
-                          : set.reps
-                    }
-                    onChange={(event) =>
-                      updateSet(
-                        entry.id,
-                        set.id,
-                        timed
-                          ? {
-                              durationSeconds: Math.max(
-                                0,
-                                Number(event.target.value) * (cardio ? 60 : 1),
-                              ),
-                            }
-                          : loaded
-                            ? {
-                                weightKg: toKg(
-                                  Math.max(0, Number(event.target.value)),
-                                  data.profile.unit,
-                                ),
-                              }
-                            : { reps: Math.max(0, Number(event.target.value)) },
-                      )
-                    }
-                  />
-                  {cardio ? (
-                    <NumericInput
-                      aria-label={`${ex.name} set ${si + 1} distance in kilometers`}
-                      inputMode="decimal"
-                      min="0"
-                      step="0.1"
-                      value={set.distanceKm}
-                      onChange={(event) =>
-                        updateSet(entry.id, set.id, {
-                          distanceKm: Number(event.target.value),
-                        })
-                      }
-                    />
-                  ) : loaded ? (
-                    <NumericInput
-                      aria-label={`${ex.name} set ${si + 1} reps`}
-                      inputMode="numeric"
-                      min="0"
-                      step={1}
-                      value={set.reps}
-                      onChange={(event) =>
-                        updateSet(entry.id, set.id, {
-                          reps: Number(event.target.value),
-                        })
-                      }
-                    />
-                  ) : (
-                    <Select
-                      aria-label={`${ex.name} set ${si + 1} type`}
-                      value={set.type}
-                      onChange={(event) =>
-                        updateSet(entry.id, set.id, {
-                          type: event.target.value as SetType,
-                        })
-                      }
+                    <button
+                      className="set-number"
+                      aria-label={`Edit set ${si + 1} type for ${ex.name}`}
+                      onClick={() => {
+                        setActions(entry.id);
+                      }}
                     >
-                      {setTypes.map((t) => (
-                        <option key={t} value={t}>
-                          {setTypeLabels[t]}
-                        </option>
-                      ))}
-                    </Select>
-                  )}
-                  {data.profile.effort !== "none" && !timed && (
+                      {set.type === "warmup" ? "W" : si + 1}
+                    </button>
                     <NumericInput
-                      aria-label={`${ex.name} set ${si + 1} ${data.profile.effort === "rpe" ? "RPE" : "RIR"}`}
+                      aria-label={`${ex.name} set ${si + 1} ${timed ? (cardio ? "minutes" : "duration in seconds") : loaded ? "weight" : "reps"}`}
                       inputMode="decimal"
                       min="0"
-                      max="10"
-                      step={0.5}
-                      placeholder="—"
+                      step={cardio || loaded ? 0.1 : 1}
                       value={
-                        (data.profile.effort === "rpe" ? set.rpe : set.rir) ??
-                        ""
+                        timed
+                          ? cardio
+                            ? Math.round((set.durationSeconds / 60) * 100) / 100
+                            : set.durationSeconds
+                          : loaded
+                            ? Math.round(
+                                fromKg(set.weightKg, data.profile.unit) * 100,
+                              ) / 100
+                            : set.reps
                       }
                       onChange={(event) =>
                         updateSet(
                           entry.id,
                           set.id,
-                          data.profile.effort === "rpe"
+                          timed
                             ? {
-                                rpe:
-                                  event.target.value === ""
-                                    ? undefined
-                                    : Number(event.target.value),
+                                durationSeconds: Math.max(
+                                  0,
+                                  Number(event.target.value) *
+                                    (cardio ? 60 : 1),
+                                ),
                               }
-                            : {
-                                rir:
-                                  event.target.value === ""
-                                    ? undefined
-                                    : Number(event.target.value),
-                              },
+                            : loaded
+                              ? {
+                                  weightKg: toKg(
+                                    Math.max(0, Number(event.target.value)),
+                                    data.profile.unit,
+                                  ),
+                                }
+                              : {
+                                  reps: Math.max(0, Number(event.target.value)),
+                                },
                         )
                       }
                     />
-                  )}
-                  <button
-                    className="set-check"
-                    aria-label={`${set.completed ? "Undo" : "Complete"} ${ex.name} set ${si + 1}`}
-                    aria-pressed={set.completed}
-                    onClick={() => toggleSet(entry, set)}
-                  >
-                    {set.skipped ? (
-                      <SkipForward size={17} />
-                    ) : (
-                      <Check size={20} />
+                    {cardio ? (
+                      <NumericInput
+                        aria-label={`${ex.name} set ${si + 1} distance in kilometers`}
+                        inputMode="decimal"
+                        min="0"
+                        step="0.1"
+                        value={set.distanceKm}
+                        onChange={(event) =>
+                          updateSet(entry.id, set.id, {
+                            distanceKm: Number(event.target.value),
+                          })
+                        }
+                      />
+                    ) : loaded ? (
+                      <NumericInput
+                        aria-label={`${ex.name} set ${si + 1} reps`}
+                        inputMode="numeric"
+                        min="0"
+                        step={1}
+                        value={set.reps}
+                        onChange={(event) =>
+                          updateSet(entry.id, set.id, {
+                            reps: Number(event.target.value),
+                          })
+                        }
+                      />
+                    ) : null}
+                    {data.profile.effort !== "none" && !timed && (
+                      <NumericInput
+                        aria-label={`${ex.name} set ${si + 1} ${data.profile.effort === "rpe" ? "RPE" : "RIR"}`}
+                        inputMode="decimal"
+                        min="0"
+                        max="10"
+                        step={0.5}
+                        placeholder="—"
+                        value={
+                          (data.profile.effort === "rpe" ? set.rpe : set.rir) ??
+                          ""
+                        }
+                        onChange={(event) =>
+                          updateSet(
+                            entry.id,
+                            set.id,
+                            data.profile.effort === "rpe"
+                              ? {
+                                  rpe:
+                                    event.target.value === ""
+                                      ? undefined
+                                      : Number(event.target.value),
+                                }
+                              : {
+                                  rir:
+                                    event.target.value === ""
+                                      ? undefined
+                                      : Number(event.target.value),
+                                },
+                          )
+                        }
+                      />
                     )}
-                  </button>
+                    <button
+                      className="set-check"
+                      aria-label={`${set.completed ? "Undo" : "Complete"} ${ex.name} set ${si + 1}`}
+                      aria-pressed={set.completed}
+                      onClick={() => toggleSet(entry, set)}
+                    >
+                      {set.skipped ? (
+                        <SkipForward size={17} />
+                      ) : (
+                        <Check size={20} />
+                      )}
+                    </button>
+                  </div>
+                  {!["working", "timed"].includes(set.type) && (
+                    <p className="set-type-note">{setTypeLabels[set.type]}</p>
+                  )}
+                  {timed &&
+                    !history &&
+                    !set.completed &&
+                    !set.skipped &&
+                    (si === pendingSet || activeSetTimer?.setId === set.id) && (
+                      <SetTimerControls
+                        name={`${ex.name} set ${si + 1}`}
+                        now={now}
+                        targetSeconds={entry.prescription.durationSeconds}
+                        timer={
+                          activeSetTimer?.setId === set.id
+                            ? activeSetTimer
+                            : undefined
+                        }
+                        blocked={Boolean(
+                          activeSetTimer && activeSetTimer.setId !== set.id,
+                        )}
+                        onChange={(timer) => {
+                          void edit((s) => {
+                            s.setTimer =
+                              timer.startedAt === undefined &&
+                              timer.elapsedMs === 0
+                                ? undefined
+                                : timer;
+                          });
+                        }}
+                        onStart={(mode) => {
+                          void edit((s) => {
+                            s.setTimer = startSetTimer(
+                              entry.id,
+                              set.id,
+                              entry.prescription.durationSeconds,
+                              mode,
+                            );
+                            const target = s.exercises
+                              .find((exercise) => exercise.id === entry.id)
+                              ?.sets.find((item) => item.id === set.id);
+                            if (target?.type === "working")
+                              target.type = "timed";
+                            s.restEndsAt = undefined;
+                            s.restPausedSeconds = undefined;
+                          });
+                        }}
+                        onFinish={() => toggleSet(entry, set)}
+                      />
+                    )}
                 </div>
               ))}
               <div className="set-footer">
@@ -1584,6 +1716,117 @@ export default function Workout({
             · “Finish workout”
           </p>
         </Sheet>
+      )}
+    </div>
+  );
+}
+
+function SetTimerControls({
+  name,
+  now,
+  targetSeconds,
+  timer,
+  blocked,
+  onChange,
+  onStart,
+  onFinish,
+}: {
+  name: string;
+  now: number;
+  targetSeconds: number;
+  timer?: SetTimer;
+  blocked: boolean;
+  onChange: (timer: SetTimer) => void;
+  onStart: (mode: SetTimer["mode"]) => void;
+  onFinish: () => void;
+}) {
+  const [chosenMode, setChosenMode] = useState<SetTimer["mode"]>(
+    targetSeconds > 0 ? "countdown" : "stopwatch",
+  );
+  const mode = timer?.mode ?? chosenMode;
+  const elapsed = timer ? timerElapsedMs(timer, now) / 1000 : 0;
+  const remaining = timer ? timerRemainingSeconds(timer, now) : targetSeconds;
+  const running = timer?.startedAt !== undefined;
+  const overtime = mode === "countdown" && targetSeconds > 0 && remaining === 0;
+  return (
+    <div className="hold-timer" role="group" aria-label={`${name} timer`}>
+      <div className="hold-timer-display">
+        <span className="small">
+          {mode === "countdown"
+            ? overtime
+              ? "Beyond target"
+              : "Time remaining"
+            : "Time held"}
+        </span>
+        <strong aria-live="off">
+          {overtime ? "+" : ""}
+          {formatTime(
+            mode === "countdown"
+              ? overtime
+                ? elapsed - targetSeconds
+                : Math.ceil(remaining)
+              : elapsed,
+          )}
+        </strong>
+        <p>
+          {timer
+            ? `${running ? "Timing" : "Paused"} · ${formatTime(elapsed)} elapsed`
+            : "Ready when you are"}
+          {targetSeconds > 0 ? ` · ${formatTime(targetSeconds)} target` : ""}
+        </p>
+        <div className="hold-timer-mode" role="group" aria-label="Timer mode">
+          {(["countdown", "stopwatch"] as const).map((value) => (
+            <button
+              type="button"
+              key={value}
+              aria-pressed={mode === value}
+              disabled={value === "countdown" && targetSeconds <= 0}
+              onClick={() => {
+                setChosenMode(value);
+                if (timer) onChange({ ...timer, mode: value });
+              }}
+            >
+              {value === "countdown" ? "Countdown" : "Stopwatch"}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="hold-timer-actions">
+        <Button
+          variant="secondary"
+          aria-label={`${running ? "Pause" : timer && elapsed > 0 ? "Resume" : "Start"} ${name} timer`}
+          disabled={blocked}
+          onClick={() => {
+            if (!timer) onStart(mode);
+            else
+              onChange(running ? pauseSetTimer(timer) : resumeSetTimer(timer));
+          }}
+        >
+          {running ? <Pause size={17} /> : <Play size={17} />}
+          {running ? "Pause" : timer && elapsed > 0 ? "Resume" : "Start"}
+        </Button>
+        <IconButton
+          label={`Reset ${name} timer`}
+          disabled={!timer}
+          onClick={() => {
+            if (timer) onChange(resetSetTimer(timer));
+          }}
+        >
+          <RotateCcw size={17} />
+        </IconButton>
+        <Button
+          aria-label={`Finish ${name} timer`}
+          disabled={!timer || elapsed <= 0}
+          onClick={onFinish}
+        >
+          <Check size={17} /> Finish set
+        </Button>
+      </div>
+      {blocked && (
+        <p className="fine-print">
+          Another set timer is active. Return to it above to finish or reset it
+          first.
+        </p>
       )}
     </div>
   );

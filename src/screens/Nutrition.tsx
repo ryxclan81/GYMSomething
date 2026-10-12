@@ -1,4 +1,5 @@
 import { Select, NumericInput } from "../components/inputs";
+import { starterFoods, foodSourceUrl } from "../data/foods";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   ArrowLeft,
@@ -43,10 +44,13 @@ import {
 } from "../nutrition/helpers";
 import {
   lookupBarcode,
-  searchFoods,
+  searchFoodPage,
   scannerSupported,
   startBarcodeScanner,
   extractBarcode,
+  savedBarcodeFood,
+  FoodLookupError,
+  type BarcodeInputFormat,
 } from "../integrations/food";
 
 const meals = ["Breakfast", "Lunch", "Dinner", "Snacks"];
@@ -90,7 +94,7 @@ export default function Nutrition({ onBack }: { onBack: () => void }) {
     setAddingMeal(meal);
     setAdding(true);
   };
-  const createFood = () =>
+  const createFood = (draft: Partial<Food> = {}) =>
     setEditingFood({
       id: id(),
       name: "",
@@ -100,6 +104,7 @@ export default function Nutrition({ onBack }: { onBack: () => void }) {
       protein: 0,
       carbs: 0,
       fat: 0,
+      ...draft,
       source: "Custom food",
     });
   if (!data.profile.nutrition)
@@ -496,8 +501,8 @@ export default function Nutrition({ onBack }: { onBack: () => void }) {
             setFood(f);
             setAdding(false);
           }}
-          onCustom={() => {
-            createFood();
+          onCustom={(draft) => {
+            createFood(draft);
             setAdding(false);
           }}
           onEdit={(f) => {
@@ -562,7 +567,7 @@ function FoodSearch({
   data: AppData;
   onClose: () => void;
   onSelect: (f: Food) => void;
-  onCustom: () => void;
+  onCustom: (draft?: Partial<Food>) => void;
   onEdit: (f: Food) => void;
 }) {
   const [term, setTerm] = useState(""),
@@ -571,7 +576,38 @@ function FoodSearch({
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [scan, setScan] = useState(false);
-  const cached = data.foods
+  const [barcodeFormat, setBarcodeFormat] =
+    useState<BarcodeInputFormat>("auto");
+  const [page, setPage] = useState(0),
+    [hasMore, setHasMore] = useState(false),
+    [searchedTerm, setSearchedTerm] = useState(""),
+    [omitted, setOmitted] = useState(0);
+  const [unknown, setUnknown] = useState<Partial<Food> | undefined>();
+  const [localPage, setLocalPage] = useState(1);
+  const request = useRef(0);
+  useEffect(
+    () => () => {
+      request.current++;
+    },
+    [],
+  );
+  const filterTerm = (value: string) => {
+    request.current++;
+    setTerm(value);
+    setRemote([]);
+    setPage(0);
+    setHasMore(false);
+    setSearchedTerm("");
+    setOmitted(0);
+    setError("");
+    setLocalPage(1);
+  };
+  const savedIds = new Set(data.foods.map((food) => food.id));
+  const collection = [
+    ...data.foods,
+    ...starterFoods.filter((food) => !savedIds.has(food.id)),
+  ];
+  const cached = collection
     .filter((f) =>
       `${f.name} ${f.brand} ${f.barcode ?? ""}`
         .toLowerCase()
@@ -582,23 +618,51 @@ function FoodSearch({
     ...cached,
     ...remote.filter((f) => !cached.some((c) => c.id === f.id)),
   ];
-  const lookup = async (type: "barcode" | "search", value: string) => {
+  const visibleResults = results.slice((localPage - 1) * 40, localPage * 40);
+  const lookup = async (
+    type: "barcode" | "search",
+    value: string,
+    requestedPage = 1,
+    format = barcodeFormat,
+  ) => {
+    const token = ++request.current;
     setBusy(true);
     setError("");
+    setUnknown(undefined);
     try {
       const cached =
         type === "barcode"
-          ? data.foods.find((food) => food.barcode === extractBarcode(value))
+          ? savedBarcodeFood(data.foods, value, format)
           : undefined;
       if (cached) {
         onSelect(cached);
         return;
       }
-      const foods =
-        type === "barcode"
-          ? [await lookupBarcode(value)]
-          : await searchFoods(value);
-      setRemote(foods);
+      const result =
+        type === "search"
+          ? await searchFoodPage(value, requestedPage)
+          : undefined;
+      const foods = result
+        ? result.foods
+        : [await lookupBarcode(value, format)];
+      if (request.current !== token) return;
+      setRemote((previous) =>
+        requestedPage > 1
+          ? [
+              ...new Map(
+                [...previous, ...foods].map((food) => [food.id, food]),
+              ).values(),
+            ]
+          : foods,
+      );
+      if (result) {
+        setPage(result.page);
+        setHasMore(result.hasMore);
+        setSearchedTerm(value);
+        setOmitted((previous) =>
+          requestedPage > 1 ? previous + result.omitted : result.omitted,
+        );
+      }
       if (!foods.length)
         setError(
           "No complete food records found. Add a custom food from the package label.",
@@ -609,7 +673,19 @@ function FoodSearch({
       });
       if (type === "barcode" && foods[0]) onSelect(foods[0]);
     } catch (e) {
+      if (request.current !== token) return;
       setError(errorMessage(e));
+      if (type === "barcode")
+        setUnknown({
+          barcode: extractBarcode(value, format) ?? value.trim(),
+          name:
+            e instanceof FoodLookupError
+              ? e.product?.product_name?.trim() ||
+                e.product?.product_name_en?.trim() ||
+                ""
+              : "",
+          brand: e instanceof FoodLookupError ? (e.product?.brands ?? "") : "",
+        });
     } finally {
       setBusy(false);
     }
@@ -623,11 +699,14 @@ function FoodSearch({
           void lookup("search", term);
         }}
       >
-        <Field label="Search your collection">
+        <Field
+          label="Search your collection"
+          hint="Includes an offline USDA generic-food library. Generic foods are separate from branded package products."
+        >
           <input
             placeholder="Food, brand or barcode"
             value={term}
-            onChange={(e) => setTerm(e.target.value)}
+            onChange={(e) => filterTerm(e.target.value)}
           />
         </Field>
         <Button
@@ -639,9 +718,29 @@ function FoodSearch({
         </Button>
       </form>
       <p className="muted">
-        Your collection filters instantly and works offline. Online search is
-        sent only when you tap Search.
+        Your collection and generic foods filter instantly and work offline.
+        Online search is sent only when you tap Search.
       </p>
+      <div className="chip-row" aria-label="Food discovery ideas">
+        {[
+          "Snacks",
+          "Chocolate",
+          "Chips",
+          "Biscuits",
+          "Protein bars",
+          "Yogurt",
+          "Fruit",
+        ].map((label) => (
+          <button
+            type="button"
+            className="chip"
+            key={label}
+            onClick={() => filterTerm(label)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
       <form
         className="row"
         onSubmit={(e) => {
@@ -652,9 +751,15 @@ function FoodSearch({
         <Field label="Barcode or supported product URL">
           <input
             value={barcode}
-            onChange={(e) => setBarcode(e.target.value)}
+            onChange={(e) => {
+              request.current++;
+              setBarcode(e.target.value);
+              setError("");
+              setUnknown(undefined);
+            }}
             placeholder="EAN / UPC"
             autoComplete="off"
+            spellCheck={false}
           />
         </Field>
         <Button
@@ -665,6 +770,20 @@ function FoodSearch({
           Look up
         </Button>
       </form>
+      <Field
+        label="Barcode format"
+        hint="Auto handles EAN/UPC and zero padding. Choose UPC-E for an eight-digit compressed UPC if it is not recognized."
+      >
+        <Select
+          value={barcodeFormat}
+          onChange={(event) =>
+            setBarcodeFormat(event.target.value as BarcodeInputFormat)
+          }
+        >
+          <option value="auto">Auto · EAN / UPC / GTIN</option>
+          <option value="upc_e">UPC-E · compressed UPC</option>
+        </Select>
+      </Field>
       <Button variant="ghost" onClick={() => setScan(true)}>
         <ScanLine size={16} /> Scan with camera
       </Button>
@@ -673,9 +792,20 @@ function FoodSearch({
           {error}
         </p>
       )}
+      {unknown && (
+        <Button variant="secondary" onClick={() => onCustom(unknown)}>
+          <Plus size={16} /> Save this barcode from its label
+        </Button>
+      )}
+      {omitted > 0 && (
+        <p className="fine-print">
+          {omitted} products have incomplete required nutrition. More results
+          may be available; you can also enter the package label.
+        </p>
+      )}
       <div className="stack section">
         {results.length ? (
-          results.map((f) => (
+          visibleResults.map((f) => (
             <div className="list-row" key={f.id}>
               <button
                 className="btn ghost"
@@ -687,6 +817,11 @@ function FoodSearch({
                   <p className="muted">
                     {f.brand ? `${f.brand} · ` : ""}
                     {round(f.calories)} kcal / {f.servingGrams} g
+                  </p>
+                  <p className="fine-print">
+                    {f.source.startsWith("USDA")
+                      ? "USDA generic food · package values may differ"
+                      : f.source}
                   </p>
                 </div>
               </button>
@@ -713,7 +848,38 @@ function FoodSearch({
             description="Create your own food or search for a packaged product."
           />
         )}
-        <Button onClick={onCustom}>
+        {results.length > 40 && (
+          <div className="row" aria-label="Food result pages">
+            <Button
+              variant="secondary"
+              disabled={localPage === 1}
+              onClick={() => setLocalPage((value) => value - 1)}
+            >
+              Previous foods
+            </Button>
+            <span className="small muted">
+              {(localPage - 1) * 40 + 1}–
+              {Math.min(localPage * 40, results.length)} of {results.length}
+            </span>
+            <Button
+              variant="secondary"
+              disabled={localPage * 40 >= results.length}
+              onClick={() => setLocalPage((value) => value + 1)}
+            >
+              Next foods
+            </Button>
+          </div>
+        )}
+        {hasMore && (
+          <Button
+            variant="secondary"
+            disabled={busy}
+            onClick={() => void lookup("search", searchedTerm, page + 1)}
+          >
+            {busy ? "Loading…" : "Load more products"}
+          </Button>
+        )}
+        <Button onClick={() => onCustom()}>
           <Plus size={16} /> Create custom food
         </Button>
       </div>
@@ -723,7 +889,7 @@ function FoodSearch({
           onCode={(code) => {
             setScan(false);
             setBarcode(code);
-            void lookup("barcode", code);
+            void lookup("barcode", code, 1, "auto");
           }}
         />
       )}
@@ -775,8 +941,9 @@ function Scanner({
   return (
     <Sheet title="Scan product barcode" onClose={onClose}>
       <p className="muted">
-        Point the rear camera at an EAN or UPC barcode. Camera frames stay on
-        your device. Only a detected identifier goes to the food database.
+        Point the rear camera at an EAN, UPC or supported GS1 product code.
+        Camera frames stay on your device. Only a detected identifier goes to
+        the food database.
       </p>
       {scannerSupported() && (
         <video
@@ -807,36 +974,87 @@ function FoodEditor({
   onClose: () => void;
   onSaved: (f: Food) => void;
 }) {
-  const [f, setF] = useState({ ...food });
   const { data } = useApp();
+  type FoodDraft = Omit<Food, "calories" | "protein" | "carbs" | "fat"> &
+    Partial<Pick<Food, "calories" | "protein" | "carbs" | "fat">>;
+  const [f, setF] = useState<FoodDraft>(() => ({
+    ...food,
+    ...(!data.foods.some((saved) => saved.id === food.id) &&
+    food.source === "Custom food"
+      ? {
+          calories: undefined,
+          protein: undefined,
+          carbs: undefined,
+          fat: undefined,
+        }
+      : {}),
+  }));
+  const [foodError, setFoodError] = useState("");
   const numeric = (
     key: "servingGrams" | "calories" | "protein" | "carbs" | "fat" | "fiber",
     value: string,
   ) =>
     setF({
       ...f,
-      [key]: value === "" && key === "fiber" ? undefined : Number(value),
+      [key]: value === "" && key !== "servingGrams" ? undefined : Number(value),
     });
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (
+      !f.name.trim() ||
+      !(f.servingGrams > 0) ||
+      [f.calories, f.protein, f.carbs, f.fat].some(
+        (value) =>
+          typeof value !== "number" || !Number.isFinite(value) || value < 0,
+      )
+    ) {
+      setFoodError(
+        "Enter the food name, a positive reference portion and every required nutrient from its label. Zero is valid when the label states zero.",
+      );
+      return;
+    }
+    const complete: Food = {
+      ...f,
+      name: f.name.trim(),
+      calories: f.calories!,
+      protein: f.protein!,
+      carbs: f.carbs!,
+      fat: f.fat!,
+      barcode: f.barcode
+        ? (extractBarcode(f.barcode) ?? f.barcode.trim())
+        : undefined,
+    };
+    if (
       await change((d) => {
         const index = d.foods.findIndex((x) => x.id === f.id);
-        if (index >= 0) d.foods[index] = f;
-        else d.foods.push(f);
+        if (index >= 0) d.foods[index] = complete;
+        else d.foods.push(complete);
         syncIngredientRecipes(d, f.id);
       })
     ) {
       toast("Food saved");
-      onSaved(f);
+      onSaved(complete);
     }
   };
   return (
     <Sheet
-      title={food.name ? "Edit food" : "Create custom food"}
+      title={
+        food.source === "Custom food" &&
+        !data.foods.some((saved) => saved.id === food.id)
+          ? "Create custom food"
+          : "Edit food"
+      }
       onClose={onClose}
     >
       <form className="stack" onSubmit={(e) => void submit(e)}>
+        {food.source === "Custom food" && (
+          <p className="muted">
+            Enter the values printed on your package for the reference portion.
+            Required nutrients stay blank until entered; optional fiber can be
+            omitted.
+          </p>
+        )}
+        {foodError && <p role="alert">{foodError}</p>}
         <Field label="Food name">
           <input
             required
@@ -993,6 +1211,17 @@ function PortionEditor({
         <p className="muted">
           {food.brand} · {food.source}
         </p>
+        {food.notes && <p className="fine-print">{food.notes}</p>}
+        {foodSourceUrl(food) && (
+          <a
+            className="text-btn"
+            href={foodSourceUrl(food)}
+            target="_blank"
+            rel="noreferrer"
+          >
+            View USDA source record
+          </a>
+        )}
         <div className="grid-2">
           <Field
             label="Portions"

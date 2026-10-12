@@ -10,7 +10,13 @@ import type {
   Unit,
   WorkoutSet,
 } from "./types";
-import { addDays, dateKey, id, weekStart } from "./helpers";
+import {
+  addDays,
+  dateKey,
+  id,
+  prescription as defaultPrescription,
+  weekStart,
+} from "./helpers";
 
 const KG_PER_LB = 0.45359237;
 const DAY_MS = 86400000;
@@ -224,28 +230,272 @@ export function substitutions(
   exercise: Exercise,
   exercises: Exercise[],
   profile: EquipmentProfile,
+  avoidIds: string[] = [],
 ): Exercise[] {
   const difficulty = { Beginner: 0, Intermediate: 1, Advanced: 2 };
+  const mobility = (item: Exercise) =>
+    /stretch|mobility/i.test(item.category) ||
+    item.tags?.includes("stretching");
   const candidates = exercises.filter(
     (other) =>
       !other.archived &&
       other.id !== exercise.id &&
+      !avoidIds.includes(other.id) &&
       equipmentCompatibility(other, profile).compatible &&
-      other.primary.some((muscle) => exercise.primary.includes(muscle)) &&
+      difficulty[other.difficulty] <= difficulty[exercise.difficulty] &&
       (exercise.measurement === "cardio"
         ? other.measurement === "cardio"
         : other.measurement !== "cardio") &&
-      !/stretch|mobility/i.test(other.category) ===
-        !/stretch|mobility/i.test(exercise.category),
+      Boolean(mobility(other)) === Boolean(mobility(exercise)),
   );
-  const score = (other: Exercise) =>
-    (other.pattern === exercise.pattern ? 8 : 0) +
-    other.primary.filter((m) => exercise.primary.includes(m)).length * 3 +
-    (other.measurement === exercise.measurement ? 2 : 0) -
-    Math.abs(difficulty[other.difficulty] - difficulty[exercise.difficulty]);
-  return candidates
+  const matches = candidates.filter((other) => {
+    const match = substitutionDetails(exercise, other);
+    // Broader choices remain honest alternatives, not fictional equipment-free
+    // versions of an unavailable pull-up or machine lift.
+    return (
+      match.kind !== "general" ||
+      (other.load === "none" &&
+        other.measurement !== "assisted" &&
+        sameBodyRegion(exercise, other))
+    );
+  });
+  const score = (other: Exercise) => {
+    const primary = overlap(exercise.primary, other.primary);
+    const cross =
+      overlap(exercise.primary, other.secondary) +
+      overlap(exercise.secondary, other.primary);
+    const secondary = overlap(exercise.secondary, other.secondary);
+    const match = substitutionDetails(exercise, other);
+    const simple = [
+      "ex-pushups",
+      "ex-bodyweight-squat",
+      "ex-plank",
+      "ex-single-leg-glute-bridge",
+      "ex-crunches",
+      "ex-bodyweight-walking-lunge",
+    ];
+    return (
+      (match.kind === "movement" ? 80 : match.kind === "muscle" ? 40 : 0) +
+      primary * 12 +
+      cross * 5 +
+      secondary * 2 +
+      (other.measurement === exercise.measurement ? 7 : 0) +
+      (exercise.alternatives.includes(other.id) ||
+      other.alternatives.includes(exercise.id)
+        ? 5
+        : 0) +
+      (simple.includes(other.id) ? 5 : 0) +
+      (other.equipment.length === 0 ? 2 : 0) -
+      Math.abs(difficulty[other.difficulty] - difficulty[exercise.difficulty])
+    );
+  };
+  return matches
     .sort((a, b) => score(b) - score(a) || a.name.localeCompare(b.name))
-    .slice(0, 8);
+    .slice(0, 12);
+}
+
+const muscleName = (value: string) => {
+  const name = value.toLowerCase().trim();
+  return (
+    (
+      {
+        quadriceps: "quads",
+        abdominals: "core",
+        abs: "core",
+        "upper-back": "upper back",
+      } as Record<string, string>
+    )[name] ?? name
+  );
+};
+const overlap = (left: string[], right: string[]) => {
+  const names = new Set(right.map(muscleName));
+  return new Set(left.map(muscleName).filter((name) => names.has(name))).size;
+};
+function sameBodyRegion(left: Exercise, right: Exercise) {
+  const region = (exercise: Exercise) => {
+    const groups = new Set<string>();
+    for (const muscle of [...exercise.primary, ...exercise.secondary].map(
+      muscleName,
+    )) {
+      if (
+        [
+          "chest",
+          "shoulders",
+          "triceps",
+          "biceps",
+          "forearms",
+          "lats",
+          "upper back",
+          "traps",
+        ].includes(muscle)
+      )
+        groups.add("upper");
+      if (
+        [
+          "quads",
+          "hamstrings",
+          "glutes",
+          "calves",
+          "adductors",
+          "abductors",
+        ].includes(muscle)
+      )
+        groups.add("lower");
+      if (["core", "lower back"].includes(muscle)) groups.add("trunk");
+    }
+    return groups;
+  };
+  const a = region(left),
+    b = region(right);
+  return [...a].some((name) => b.has(name));
+}
+
+export function substitutionDetails(
+  original: Exercise,
+  candidate: Exercise,
+): {
+  kind: "movement" | "muscle" | "general";
+  reason: string;
+} {
+  const samePattern =
+    original.pattern.trim() &&
+    original.pattern === candidate.pattern &&
+    !["Accessory", "Hold / mobility"].includes(original.pattern);
+  const shared = overlap(
+    [...original.primary, ...original.secondary],
+    [...candidate.primary, ...candidate.secondary],
+  );
+  const outdoor = /trail running|outdoor/i.test(candidate.name)
+    ? " Needs an appropriate outdoor route."
+    : "";
+  if (samePattern)
+    return {
+      kind: "movement",
+      reason: `Same movement pattern; resistance and difficulty can differ. Review the new targets.${outdoor}`,
+    };
+  if (shared)
+    return {
+      kind: "muscle",
+      reason: `Some muscle targets overlap; the movement and emphasis can differ.${outdoor}`,
+    };
+  return {
+    kind: "general",
+    reason: `Broader available option for the same body region. It changes the movement and muscle emphasis; it is not an equivalent replacement.${outdoor}`,
+  };
+}
+
+export type SessionAdaptation =
+  { kind: "substitute"; exerciseId: string } | { kind: "skip" };
+
+/** Decisions are keyed by the original template Prescription.id. No input mutates. */
+export function adaptWorkoutSession(
+  session: Session,
+  choices: Record<string, SessionAdaptation>,
+  exercises: Exercise[],
+  profile: EquipmentProfile,
+  avoidIds: string[] = [],
+): Session {
+  if (session.completedAt)
+    throw new Error(
+      "Adapt an unfinished workout; keep completed records in history.",
+    );
+  const ids = new Set(session.exercises.map((entry) => entry.prescription.id));
+  if (Object.keys(choices).some((key) => !ids.has(key)))
+    throw new Error(
+      "An adaptation refers to an exercise outside this session.",
+    );
+  const result = structuredClone(session);
+  result.equipmentId = profile.id;
+  for (const entry of result.exercises) {
+    const decision = Object.hasOwn(choices, entry.prescription.id)
+      ? choices[entry.prescription.id]
+      : undefined;
+    if (!decision) {
+      if (
+        !equipmentCompatibility(
+          entry.exercise,
+          profile,
+          entry.prescription.weightKg,
+        ).compatible
+      )
+        throw new Error(`Choose a substitute or skip ${entry.exercise.name}.`);
+      continue;
+    }
+    if (decision.kind === "skip") {
+      // Finished sets are actual history, even if remaining work is skipped.
+      for (const set of entry.sets) if (!set.completed) set.skipped = true;
+      continue;
+    }
+    if (decision.kind !== "substitute")
+      throw new Error("Choose a valid session adaptation.");
+    if (entry.sets.some((set) => set.completed && !set.skipped))
+      throw new Error(
+        "Completed sets must stay with their original exercise. Add the substitute separately.",
+      );
+    const replacement = exercises.find(
+      (exercise) => exercise.id === decision.exerciseId,
+    );
+    if (
+      !replacement ||
+      replacement.archived ||
+      avoidIds.includes(replacement.id)
+    )
+      throw new Error(
+        "Choose an available exercise that you have not archived or chosen to avoid.",
+      );
+    if (
+      replacement.id === entry.exerciseId ||
+      !equipmentCompatibility(replacement, profile, 0).compatible
+    )
+      throw new Error(
+        "Choose a different exercise supported by this equipment environment.",
+      );
+    const defaults = defaultPrescription(replacement);
+    const wasTimed = ["cardio", "duration"].includes(
+      entry.exercise.measurement,
+    );
+    const timed = ["cardio", "duration"].includes(replacement.measurement);
+    const old = entry.prescription;
+    const prescription: Prescription = {
+      ...old,
+      exerciseId: replacement.id,
+      weightKg: 0,
+      repMin: timed ? 0 : wasTimed ? defaults.repMin : old.repMin,
+      repMax: timed ? 0 : wasTimed ? defaults.repMax : old.repMax,
+      durationSeconds: timed
+        ? wasTimed && old.durationSeconds > 0
+          ? old.durationSeconds
+          : defaults.durationSeconds
+        : 0,
+      distanceKm:
+        replacement.measurement === "cardio" &&
+        entry.exercise.measurement === "cardio"
+          ? old.distanceKm
+          : 0,
+      rir: undefined,
+      rpe: undefined,
+      rule: replacement.progression
+        ? structuredClone(replacement.progression)
+        : undefined,
+    };
+    entry.originalExerciseId ??= entry.exerciseId;
+    entry.exerciseId = replacement.id;
+    entry.exercise = structuredClone(replacement);
+    entry.prescription = prescription;
+    entry.sets = entry.sets.map((set) => ({
+      ...set,
+      weightKg: 0,
+      reps: prescription.repMin,
+      durationSeconds: prescription.durationSeconds,
+      distanceKm: prescription.distanceKm,
+      rir: undefined,
+      rpe: undefined,
+      completed: false,
+      completedAt: undefined,
+      type: set.type === "warmup" ? "warmup" : timed ? "timed" : "working",
+    }));
+  }
+  return result;
 }
 
 export function evaluateProgression(
@@ -761,9 +1011,7 @@ export function weeklyStreak(
   return streak;
 }
 
-export function personalRecords(
-  sessions: Session[],
-): {
+export function personalRecords(sessions: Session[]): {
   exerciseId: string;
   exerciseName: string;
   type: string;

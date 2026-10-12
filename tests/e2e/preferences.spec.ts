@@ -16,6 +16,7 @@ test("optional setup saves the complete profile, chosen environment and nutritio
   page,
 }, testInfo) => {
   await page.goto("/");
+  await page.getByRole("button", { name: "Get started", exact: true }).click();
   const welcome = page.getByRole("dialog", { name: "Welcome to Setwise" });
   await expect(welcome).toBeVisible();
   for (const viewport of [

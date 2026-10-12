@@ -1,0 +1,563 @@
+/* Setwise: a focused training journal, dark evergreen with one quiet sage accent. */
+:root {
+  --bg: #0c1310;
+  --surface: #15231c;
+  --surface-2: #1e3027;
+  --text: #f0f4ee;
+  --muted: #a9bcb0;
+  --accent: #c0dfc5;
+  --accent-ink: #13241b;
+  --selected: #2b4133;
+  --line: #304739;
+  --line-strong: #769680;
+  --radius: 14px;
+  color: var(--text);
+  background: var(--bg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+:root[data-accent="sage"] {
+  --accent: #c0dfc5;
+  --accent-ink: #13241b;
+  --selected: #2b4133;
+}
+:root[data-accent="steel"] {
+  --accent: #b8d4e2;
+  --accent-ink: #142630;
+  --selected: #273c42;
+}
+:root[data-accent="violet"] {
+  --accent: #d1cbe2;
+  --accent-ink: #242030;
+  --selected: #39333e;
+}
+:root[data-accent="neutral"] {
+  --accent: #e2e5dc;
+  --accent-ink: #22261e;
+  --selected: #383f34;
+}
+body {
+  color: var(--text);
+  background: var(--bg);
+  font-size: 16px;
+}
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+h1 {
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+button,
+input,
+textarea,
+select {
+  touch-action: manipulation;
+}
+.brand-home {
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  min-height: 44px;
+  border-radius: 6px;
+}
+.brand-home:hover {
+  color: var(--accent);
+}
+.brand > span {
+  font-weight: 620;
+}
+.app-header {
+  background: var(--bg);
+  height: auto;
+  min-height: 76px;
+}
+.sidebar {
+  background: var(--bg);
+  border-right-color: var(--line);
+}
+.sidebar nav button.selected {
+  background: var(--surface-2);
+  color: var(--accent);
+}
+.training-location {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin: -10px 0 24px;
+  padding: 0;
+  width: fit-content;
+  max-width: 100%;
+  background: transparent;
+  border: 0;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: left;
+}
+.training-location > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.training-location strong {
+  font-weight: 500;
+  color: var(--text);
+}
+.training-location .training-location-action {
+  margin-left: 8px;
+  color: var(--accent);
+}
+.training-location:hover .training-location-action {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.page-header {
+  margin-bottom: 25px;
+}
+.daily-workout {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 23px 0;
+  gap: 16px;
+}
+.daily-workout-list {
+  gap: 0;
+}
+.daily-workout:hover {
+  background: var(--surface);
+}
+.daily-workout.is-active {
+  border-left: 3px solid var(--accent);
+  padding-left: 15px;
+}
+.daily-workout-icon {
+  background: var(--surface-2);
+  border-radius: 14px;
+  width: 54px;
+  height: 58px;
+}
+.daily-workout-top strong {
+  font-size: 20px;
+  font-weight: 560;
+}
+.daily-workout-content {
+  gap: 8px;
+}
+.daily-workout-facts,
+.daily-workout-muscles {
+  line-height: 1.6;
+}
+.home-day-picker {
+  gap: 4px;
+}
+.home-day-picker .day-cell {
+  background: transparent;
+  border: 1px solid transparent;
+  min-height: 76px;
+  border-radius: 11px;
+}
+.home-day-picker .day-cell:hover {
+  background: var(--surface);
+}
+.home-day-picker .day-cell.selected {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
+}
+.home-day-picker .day-cell.selected > span,
+.home-day-picker .day-cell.selected > strong {
+  color: var(--accent-ink);
+}
+.home-day-picker .day-cell.selected .day-marker.planned {
+  background: var(--accent-ink);
+}
+.home-day-picker .day-cell.selected .day-marker.done {
+  color: var(--accent-ink);
+}
+.week-summary {
+  padding: 28px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+.week-summary-count > strong {
+  font-size: 52px;
+  font-weight: 560;
+}
+.home-metrics span {
+  line-height: 1.6;
+}
+.template-card {
+  background: var(--surface);
+  border-radius: 15px;
+}
+.template-card-heading {
+  gap: 12px;
+}
+.template-title {
+  align-items: flex-start;
+}
+.template-title > div {
+  overflow-wrap: anywhere;
+}
+.template-card-heading > span {
+  flex-shrink: 0;
+}
+.template-description {
+  line-height: 1.65;
+}
+.open-workout {
+  border-radius: 15px;
+  background: var(--surface);
+}
+.set-grid input,
+.field input,
+.field textarea {
+  border-color: var(--line-strong);
+}
+.forma-select {
+  border-color: var(--line-strong);
+}
+.btn.primary:hover {
+  background: color-mix(in srgb, var(--accent), white 10%);
+  border-color: var(--accent);
+}
+.btn.secondary:hover {
+  background: var(--selected);
+  border-color: var(--line-strong);
+}
+.sheet {
+  background: var(--surface);
+}
+.sheet-inner {
+  padding: 24px;
+}
+.sheet-header {
+  align-items: center;
+}
+.sheet-header-actions {
+  flex-shrink: 0;
+}
+.sheet-header h2 {
+  line-height: 1.35;
+}
+.sheet,
+.sheet-inner {
+  overscroll-behavior: contain;
+}
+.field-label > label,
+.field-label > span {
+  color: var(--text);
+  font-size: 14px;
+}
+.home-page .week-summary,
+.home-page .home-insights {
+  overflow: visible;
+}
+.workout-overview-card {
+  background: var(--surface);
+}
+.workout-overview-card:hover {
+  transform: none;
+  background: var(--surface-2);
+}
+.focus-prescription {
+  border-color: var(--line);
+}
+.focus-topbar,
+.focus-footer,
+.bottom-nav {
+  background: var(--bg);
+}
+.rest-dock {
+  background: var(--surface-2);
+}
+.help-popover {
+  border-color: var(--line-strong) !important;
+}
+.welcome-page {
+  max-width: 1200px;
+  min-height: 100dvh;
+  margin-inline: auto;
+  padding: max(28px, env(safe-area-inset-top)) 48px
+    max(32px, env(safe-area-inset-bottom));
+}
+.welcome-header {
+  margin-bottom: clamp(50px, 10vh, 110px);
+}
+.welcome-layout {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  align-items: center;
+  gap: 88px;
+}
+.welcome-copy h1 {
+  font-size: clamp(44px, 5.6vw, 76px);
+  line-height: 1.08;
+  letter-spacing: -0.045em;
+  margin: 0 0 26px;
+}
+.welcome-copy > p {
+  max-width: 34ch;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.7;
+  margin-bottom: 32px;
+}
+.welcome-start {
+  min-height: 54px;
+  min-width: 190px;
+  justify-content: space-between;
+  font-size: 16px;
+}
+.welcome-copy > small {
+  display: block;
+  margin-top: 20px;
+  max-width: 36ch;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+.welcome-preview {
+  padding: 30px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+}
+.welcome-preview-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-weight: 550;
+  font-size: 19px;
+}
+.welcome-preview-heading > svg {
+  color: var(--accent);
+}
+.welcome-preview > p {
+  margin: 18px 0 24px;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+.welcome-set-preview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: center;
+  text-align: center;
+  row-gap: 19px;
+  padding: 22px 0;
+  border-block: 1px solid var(--line);
+}
+.welcome-set-preview > span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.welcome-set-preview > strong {
+  font-size: 24px;
+  font-weight: 550;
+}
+.welcome-set-preview > svg {
+  margin-inline: auto;
+  color: var(--accent);
+}
+.welcome-set-preview > .welcome-next-set {
+  color: var(--accent);
+}
+.welcome-preview-feature {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 22px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.welcome-preview-feature > svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+@media (max-width: 800px) {
+  /* The navigation owns a real layout row. Scrolled content cannot sit behind it. */
+  .app-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    overflow: hidden;
+  }
+  .app-content {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-padding: 82px 0 24px;
+  }
+  .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 25;
+    flex-shrink: 0;
+    padding: calc(10px + env(safe-area-inset-top)) 22px 10px;
+    min-height: 68px;
+  }
+  .header-controls .desktop-equipment,
+  .header-controls .header-help {
+    display: none;
+  }
+  .header-controls {
+    gap: 8px;
+  }
+  .mobile-logo .brand > span {
+    font-size: 26px;
+  }
+  .mobile-logo .brand > svg {
+    width: 24px;
+    height: 28px;
+  }
+  .bottom-nav {
+    position: static;
+    flex-shrink: 0;
+    min-height: 76px;
+    padding: 10px 12px max(10px, env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line);
+    backdrop-filter: none;
+    z-index: 30;
+  }
+  .bottom-nav button {
+    width: auto;
+    flex: 1;
+    min-width: 0;
+    font-size: 11px;
+    gap: 6px;
+  }
+  .bottom-nav button.selected {
+    color: var(--accent);
+  }
+  .page {
+    padding: 28px 22px 32px;
+  }
+  .home-page h1 {
+    font-size: 31px;
+    line-height: 1.2;
+  }
+  .training-location {
+    font-size: 13px;
+    margin-bottom: 22px;
+  }
+  .daily-workout {
+    padding: 22px 0;
+    gap: 12px;
+  }
+  .daily-workout-icon {
+    width: 46px;
+    height: 52px;
+  }
+  .daily-workout-top strong {
+    font-size: 19px;
+  }
+  .daily-workout-action {
+    flex-shrink: 0;
+  }
+  .week-summary {
+    padding: 24px;
+  }
+  .home-insights {
+    margin-bottom: 8px;
+  }
+  .app-shell.focus-mode {
+    display: block;
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+  .app-shell.focus-mode .app-content {
+    overflow: visible;
+    height: auto;
+    min-height: 100dvh;
+  }
+  .app-shell.focus-mode .page {
+    padding-bottom: calc(200px + env(safe-area-inset-bottom));
+  }
+  .welcome-page {
+    padding: max(28px, env(safe-area-inset-top)) 28px
+      max(36px, env(safe-area-inset-bottom));
+  }
+  .welcome-header {
+    margin-bottom: 52px;
+  }
+  .welcome-layout {
+    grid-template-columns: 1fr;
+    gap: 38px;
+  }
+  .welcome-copy h1 {
+    font-size: clamp(40px, 10vw, 58px);
+    margin-bottom: 23px;
+  }
+  .welcome-copy > p {
+    font-size: 17px;
+    margin-bottom: 27px;
+  }
+  .welcome-start {
+    width: 100%;
+  }
+  .welcome-preview {
+    padding: 24px;
+    border-radius: 18px;
+  }
+}
+@media (max-width: 360px) {
+  .page {
+    padding-inline: 18px;
+  }
+  .app-header {
+    padding-inline: 18px;
+  }
+  .daily-workout-top strong {
+    font-size: 18px;
+  }
+  .daily-workout-icon {
+    width: 40px;
+  }
+  .welcome-page {
+    padding-inline: 22px;
+  }
+  .welcome-header {
+    margin-bottom: 38px;
+  }
+  .welcome-copy h1 {
+    font-size: 39px;
+  }
+}
+@media (max-height: 550px) and (min-width: 600px) {
+  .welcome-header {
+    margin-bottom: 24px;
+  }
+  .welcome-layout {
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 32px;
+  }
+  .welcome-copy h1 {
+    font-size: 39px;
+    margin-bottom: 14px;
+  }
+  .welcome-copy > p {
+    margin-bottom: 20px;
+    font-size: 15px;
+  }
+  .welcome-preview {
+    padding: 22px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .welcome-page *,
+  .daily-workout,
+  .btn {
+    transition: none;
+    animation: none;
+  }
+}

@@ -24,6 +24,7 @@ import {
   validateSet,
 } from "../src/domain/session";
 import { sessionStats } from "../src/domain/engine";
+import { deleteTemplate } from "../src/domain/templates";
 
 class MemoryStorage implements Storage {
   private entries = new Map<string, string>();
@@ -376,6 +377,89 @@ describe("Optional appearance, program phases and goal timeline backup fields", 
 });
 
 describe("Phone local storage and full backups", () => {
+  it("restores the welcome choice, selected icon and a running hold timer after restart", async () => {
+    const data = defaultData();
+    data.profile.welcomeStarted = true;
+    data.profile.accent = "sage";
+    const template = data.templates.find(
+      (item) => item.id === "tpl-bodyweight",
+    )!;
+    template.icon = "home";
+    data.activeSession = createSession(data, template);
+    const hold = data.activeSession.exercises.find(
+      (entry) => entry.exercise.measurement === "duration",
+    )!;
+    data.activeSession.setTimer = {
+      exerciseId: hold.id,
+      setId: hold.sets[0].id,
+      mode: "countdown",
+      elapsedMs: 12000,
+      startedAt: Date.now() - 1000,
+      targetSeconds: 30,
+    };
+    await importBackup(JSON.stringify(data));
+    await initialize();
+    const restored = useApp.getState().data;
+    expect(restored.profile.welcomeStarted).toBe(true);
+    expect(restored.profile.accent).toBe("sage");
+    expect(
+      restored.templates.find((item) => item.id === template.id)?.icon,
+    ).toBe("home");
+    expect(restored.activeSession?.setTimer).toEqual(
+      data.activeSession.setTimer,
+    );
+    expect(
+      restored.activeSession?.exercises.find((entry) => entry.id === hold.id)
+        ?.sets[0].completed,
+    ).toBe(false);
+    expect(saved().activeSession?.setTimer).toEqual(
+      data.activeSession.setTimer,
+    );
+  });
+  it("restores session snapshots after permanently deleting their original workout", async () => {
+    const data = defaultData();
+    const template = data.templates[0];
+    data.schedule = [
+      {
+        id: "deleted-workout-day",
+        templateId: template.id,
+        date: "2026-10-12",
+        status: "planned",
+      },
+    ];
+    data.activeSession = createSession(data, template, data.schedule[0].id);
+    data.activeSession.exercises[0].sets[0].reps = 9;
+    const snapshot = structuredClone(data.activeSession);
+    deleteTemplate(data, template.id);
+    await importBackup(JSON.stringify(data));
+    await initialize();
+    expect(
+      useApp.getState().data.templates.some((item) => item.id === template.id),
+    ).toBe(false);
+    expect(useApp.getState().data.activeSession).toEqual(snapshot);
+    expect(useApp.getState().data.schedule[0].templateId).toBe("");
+    expect(saved().activeSession?.exercises[0].sets[0].reps).toBe(9);
+  });
+  it("discards obsolete UI timers without losing recorded sets", () => {
+    const data = defaultData();
+    data.activeSession = createSession(data, data.templates[0]);
+    const entry = data.activeSession.exercises[0];
+    entry.sets[0].completed = true;
+    entry.sets[0].reps = 11;
+    data.activeSession.setTimer = {
+      exerciseId: entry.id,
+      setId: entry.sets[0].id,
+      mode: "stopwatch",
+      elapsedMs: 9000,
+      targetSeconds: 0,
+    };
+    const validated = validateBackup(data);
+    expect(validated.activeSession?.setTimer).toBeUndefined();
+    expect(validated.activeSession?.exercises[0].sets[0]).toMatchObject({
+      reps: 11,
+      completed: true,
+    });
+  });
   it("rejects orphan recipes, malformed dates and credential-bearing endpoints", () => {
     const d = defaultData();
     d.recipes.push({

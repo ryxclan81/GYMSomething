@@ -73,6 +73,7 @@ export async function quickOnboard(
   { name = "", unit = "kg" }: { name?: string; unit?: "kg" | "lb" } = {},
 ) {
   await page.goto("/");
+  await page.getByRole("button", { name: "Get started", exact: true }).click();
   const welcome = page.getByRole("dialog", { name: "Welcome to Setwise" });
   await expect(welcome).toBeVisible();
   if (name)

@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { AppData } from "../domain/types";
 import { defaultData } from "../data/defaults";
 import { validateAIEndpoint } from "../integrations/ai";
+import { workoutIconIds } from "../domain/workoutIcons";
 import {
   STORAGE_KEY,
   encodePersistedData,
@@ -390,6 +391,16 @@ const session = z
     restEndsAt: positive.optional(),
     restPausedSeconds: positive.optional(),
     focusedExerciseId: uid.optional(),
+    setTimer: z
+      .object({
+        exerciseId: uid,
+        setId: uid,
+        mode: z.enum(["countdown", "stopwatch"]),
+        elapsedMs: positive,
+        startedAt: positive.optional(),
+        targetSeconds: positive,
+      })
+      .optional(),
     notes: text,
     exercises: z.array(
       z
@@ -455,7 +466,8 @@ export const backupSchema = z
         celebrations: z.boolean(),
         indirectFactor: z.number().min(0).max(1),
         onboardingComplete: z.boolean(),
-        accent: z.enum(["steel", "violet", "neutral"]).optional(),
+        accent: z.enum(["sage", "steel", "violet", "neutral"]).optional(),
+        welcomeStarted: z.boolean().optional(),
         density: z.enum(["comfortable", "compact"]).optional(),
       })
       .passthrough(),
@@ -481,6 +493,7 @@ export const backupSchema = z
           minutes: positive,
           exercises: z.array(prescription),
           updatedAt: timestamp,
+          icon: z.enum(workoutIconIds).optional(),
           planningSource: z
             .object({
               programId: uid,
@@ -716,9 +729,19 @@ export function validateBackup(value: unknown): AppData {
     for (const ingredient of recipe.ingredients)
       if (!foodIds.has(ingredient.foodId))
         throw new Error(`Missing ingredient in ${recipe.name}.`);
-  for (const scheduled of result.schedule)
-    if (scheduled.status !== "rest" && !templateIds.has(scheduled.templateId))
+  for (const scheduled of result.schedule) {
+    const linkedHistory = result.sessions.some(
+      (session) => session.id === scheduled.sessionId,
+    );
+    const linkedActive = result.activeSession?.scheduleId === scheduled.id;
+    if (
+      scheduled.status !== "rest" &&
+      !templateIds.has(scheduled.templateId) &&
+      !linkedHistory &&
+      !linkedActive
+    )
       throw new Error("A scheduled workout template is missing.");
+  }
   for (const program of result.programs)
     if (program.templateIds.some((x) => !templateIds.has(x)))
       throw new Error("A program workout template is missing.");
@@ -744,6 +767,21 @@ export function validateBackup(value: unknown): AppData {
       !s.exercises.some((e) => e.id === s.focusedExerciseId)
     )
       delete s.focusedExerciseId;
+    if (s.setTimer) {
+      const targetExercise = s.exercises.find(
+        (entry) => entry.id === s.setTimer?.exerciseId,
+      );
+      const targetSet = targetExercise?.sets.find(
+        (set) => set.id === s.setTimer?.setId,
+      );
+      if (
+        s.completedAt ||
+        !targetSet ||
+        targetSet.completed ||
+        targetSet.skipped
+      )
+        delete s.setTimer;
+    }
     if (
       !Number.isFinite(Date.parse(s.startedAt)) ||
       (s.completedAt && !Number.isFinite(Date.parse(s.completedAt)))

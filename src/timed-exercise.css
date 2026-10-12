@@ -1,0 +1,84 @@
+.set-grid.set-basic {
+  grid-template-columns: 40px minmax(0, 1fr) 48px;
+}
+.set-grid.set-basic.with-effort {
+  grid-template-columns: 40px minmax(0, 1fr) minmax(50px, 0.55fr) 48px;
+}
+.timed-set-block {
+  margin-bottom: 15px;
+}
+.hold-timer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  margin: 5px 0 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+}
+.hold-timer-display {
+  flex: 1;
+  min-width: 120px;
+}
+.hold-timer-display > strong {
+  display: block;
+  font-size: 32px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 550;
+  line-height: 1.2;
+  margin: 5px 0;
+}
+.hold-timer-display > p {
+  font-size: 12px;
+  color: var(--muted);
+}
+.hold-timer .hold-timer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.hold-timer .hold-timer-actions .btn {
+  min-height: 44px;
+}
+.hold-timer-mode {
+  display: flex;
+  gap: 7px;
+  margin-top: 10px;
+}
+.hold-timer-mode > button {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+}
+.hold-timer-mode > button[aria-pressed="true"] {
+  color: var(--text);
+  background: var(--selected);
+  border-color: var(--line-strong);
+}
+.set-type-note {
+  font-size: 12px;
+  color: var(--muted);
+}
+@media (max-width: 480px) {
+  .workout-focused .set-grid.set-basic {
+    grid-template-columns: 32px minmax(0, 1fr) 46px;
+  }
+  .workout-focused .set-grid.set-basic.with-effort {
+    grid-template-columns: 32px minmax(0, 1fr) minmax(48px, 0.55fr) 46px;
+  }
+  .hold-timer {
+    padding: 14px;
+  }
+  .hold-timer .hold-timer-actions {
+    width: 100%;
+  }
+  .hold-timer .hold-timer-actions .btn.primary {
+    flex: 1;
+  }
+}

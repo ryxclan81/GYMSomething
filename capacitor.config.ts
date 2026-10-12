@@ -3,6 +3,6 @@ const config: CapacitorConfig = {
   appId: "app.forma.training",
   appName: "Setwise",
   webDir: "dist",
-  ios: { backgroundColor: "#090b0f", contentInset: "automatic" },
+  ios: { backgroundColor: "#0c1310", contentInset: "automatic" },
 };
 export default config;

@@ -4,7 +4,7 @@ Setwise builds to static HTML, CSS and JavaScript in `dist`. GitHub Pages is sui
 
 ## GitHub Pages project
 
-The intended repository is `ryxclan81/GYMSomething`. Its expected project URL is [https://ryxclan81.github.io/GYMSomething/](https://ryxclan81.github.io/GYMSomething/), once Pages is enabled and the deployment succeeds. Creating this configuration does not publish the site or change repository visibility.
+The configured repository is `ryxclan81/GYMSomething`, with GitHub Actions selected as its Pages source. Its project URL is [Setwise](https://ryxclan81.github.io/GYMSomething/). The initial 1.3.0 build and Pages deployment succeeded on 12 October 2026; later releases use the same workflow and origin. Publishing files does not move or upload local fitness records.
 
 GitHub Free supports Pages in public repositories. A private repository needs an eligible paid plan. The website is normally public even when its source repository is private; private website access is a separate enterprise feature. Check the repository's Pages availability and intended website visibility before deployment. See [Pages availability](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages) and [publishing source and visibility](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site).
 
@@ -45,7 +45,7 @@ Visit `http://127.0.0.1:4184/GYMSomething/`. Confirm the app renders, icons load
 
 The generated worker precaches the bundled scripts, styles, HTML, icons and manifest. Offline use needs one completed online installation first; remote exercise media and optional network integrations still need connectivity. See [PWA manifest requirements](https://vite-pwa-org.netlify.app/guide/pwa-minimal-requirements) and [service worker precaching](https://vite-pwa-org.netlify.app/guide/service-worker-precache). The app uses in-app navigation at the site entry URL, so it does not require a server-side route rewrite or a custom `404.html`.
 
-Local preparation was verified on 2026-10-11 with Node 24.19.0 and a separate `/GYMSomething/` production build. Chrome loaded the manifest, all three manifest icons, touch icon and favicon beneath that path; the worker registered with the same project scope. An offline workout set survived a full offline reload and resume, with no page errors or missing assets. Type checking, config lint and formatting passed. This verifies the static artifact locally; GitHub Pages account eligibility and an actual remote deployment still need their own confirmation.
+Local preparation was verified on 2026-10-11 with Node 24.19.0 and a separate `/GYMSomething/` production build. Chrome loaded the manifest, all three manifest icons, touch icon and favicon beneath that path; the worker registered with the same project scope. An offline workout set survived a full offline reload and resume, with no page errors or missing assets. Type checking, config lint and formatting passed. This verifies the static artifact locally. GitHub Actions separately confirmed the initial build/deployment; hosted-browser verification was skipped at the user's request. Physical iPhone installation and Safari behavior remain a separate device check.
 
 ## Local records and updates
 

@@ -1,3 +1,4 @@
+import { HelpToggle } from "../components/Help";
 import { Select, NumericInput } from "../components/inputs";
 import { useState, type FormEvent } from "react";
 import {
@@ -182,6 +183,7 @@ export default function Settings({
           <h1>Settings</h1>
           <p className="muted">Make Setwise fit the way you train.</p>
         </div>
+        <HelpToggle />
       </header>
       <section
         className="settings-profile-summary"
@@ -299,7 +301,7 @@ export default function Settings({
           <div className="stack">
             <Field label="Accent color">
               <Select
-                value={data.profile.accent ?? "steel"}
+                value={data.profile.accent ?? "sage"}
                 onChange={(event) =>
                   void save((draft) => {
                     draft.profile.accent = event.target
@@ -307,7 +309,8 @@ export default function Settings({
                   })
                 }
               >
-                <option value="steel">Steel blue</option>
+                <option value="sage">Sage</option>
+                <option value="steel">Sky blue</option>
                 <option value="violet">Soft violet</option>
                 <option value="neutral">Neutral</option>
               </Select>

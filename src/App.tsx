@@ -1,3 +1,9 @@
+import Welcome from "./components/Welcome";
+import {
+  sortTemplates,
+  templateSortOptions,
+  type TemplateSort,
+} from "./domain/templates";
 import { Brand as Logo } from "./components/Brand";
 import { HelpToggle } from "./components/Help";
 import WorkoutIcon from "./components/WorkoutIcon";
@@ -35,6 +41,9 @@ import { createSession } from "./domain/session";
 import {
   equipmentCompatibility,
   substitutions,
+  substitutionDetails,
+  adaptWorkoutSession,
+  type SessionAdaptation,
   sessionStats,
   weeklyStreak,
   fromKg,
@@ -111,6 +120,7 @@ export default function App() {
     [summary, setSummary] = useState<Session | null>(null),
     [editing, setEditing] = useState<Session | null>(null);
   const [exerciseFocused, setExerciseFocused] = useState(false);
+  const [startingSetup, setStartingSetup] = useState(false);
   const [adapt, setAdapt] = useState<{
       template: Template;
       scheduleId?: string;
@@ -132,9 +142,12 @@ export default function App() {
   }, []);
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
+    document
+      .querySelector(".app-content")
+      ?.scrollTo({ top: 0, behavior: "instant" });
   }, [tab]);
   useEffect(() => {
-    document.documentElement.dataset.accent = data.profile.accent ?? "steel";
+    document.documentElement.dataset.accent = data.profile.accent ?? "sage";
     document.documentElement.dataset.density =
       data.profile.density ?? "comfortable";
   }, [data.profile.accent, data.profile.density]);
@@ -177,40 +190,35 @@ export default function App() {
   }
   async function beginAdapted() {
     if (!adapt) return;
-    const template = structuredClone(adapt.template);
-    for (const p of template.exercises) {
-      const ex = data.exercises.find((e) => e.id === p.exerciseId);
-      if (!ex || equipmentCompatibility(ex, equipment, p.weightKg).compatible)
-        continue;
-      const replacement = data.exercises.find((e) => e.id === choices[p.id]);
-      if (
-        !replacement ||
-        !equipmentCompatibility(replacement, equipment).compatible
-      ) {
-        toast("Choose an available substitute for every unavailable exercise.");
-        return;
-      }
-      p.exerciseId = replacement.id;
-      p.weightKg = 0;
-    }
-    const session = createSession(data, template, adapt.scheduleId);
-    session.exercises.forEach((e, i) => {
-      const original = adapt.template.exercises[i];
-      if (original.exerciseId !== e.exerciseId) {
-        e.originalExerciseId = original.exerciseId;
-        e.sets.forEach((s) => {
-          s.weightKg = 0;
-        });
-      }
-    });
     try {
+      const decisions: Record<string, SessionAdaptation> = Object.fromEntries(
+        Object.entries(choices)
+          .filter(([, value]) => value)
+          .map(([key, value]) => [
+            key,
+            value === "__skip__"
+              ? { kind: "skip" }
+              : { kind: "substitute", exerciseId: value },
+          ]),
+      );
+      const session = adaptWorkoutSession(
+        createSession(data, adapt.template, adapt.scheduleId),
+        decisions,
+        data.exercises,
+        equipment,
+        data.profile.avoid,
+      );
       await updateData((d) => {
         d.activeSession = session;
       });
       setAdapt(null);
       setTab("workout");
-    } catch {
-      toast("The workout could not be saved.");
+    } catch (error) {
+      toast(
+        error instanceof Error
+          ? error.message
+          : "The workout could not be saved.",
+      );
     }
   }
   function finished(session: Session) {
@@ -225,6 +233,29 @@ export default function App() {
         <p className="muted">Getting your training ready…</p>
       </div>
     );
+  if (
+    !error &&
+    !data.profile.onboardingComplete &&
+    !data.profile.welcomeStarted
+  )
+    return (
+      <ErrorBoundary>
+        <Welcome
+          busy={startingSetup}
+          onStart={() => {
+            setStartingSetup(true);
+            void updateData((draft) => {
+              draft.profile.welcomeStarted = true;
+            })
+              .catch(() =>
+                toast("Setup could not be saved. Check your browser storage."),
+              )
+              .finally(() => setStartingSetup(false));
+          }}
+        />
+        <Toasts />
+      </ErrorBoundary>
+    );
   return (
     <ErrorBoundary>
       <div
@@ -232,7 +263,7 @@ export default function App() {
         data-saving={saving}
       >
         <aside className="sidebar">
-          <Logo />
+          <Logo onHome={() => navigate("home")} />
           <nav aria-label="Main navigation">
             {mainTabs.map((t) => (
               <button
@@ -256,7 +287,7 @@ export default function App() {
         <div className="app-content">
           <header className="app-header">
             <div className="mobile-logo">
-              <Logo />
+              <Logo onHome={() => navigate("home")} />
             </div>
             <div className="desktop-location">Training journal</div>
             <div className="header-controls">
@@ -267,7 +298,7 @@ export default function App() {
                 </span>
               )}
               <button
-                className="equipment-switch"
+                className="equipment-switch desktop-equipment"
                 data-help-topic="equipment"
                 aria-label={`Training equipment: ${equipment?.name}`}
                 onClick={() => setEquipmentOpen(true)}
@@ -276,7 +307,7 @@ export default function App() {
                 <span>{equipment?.name}</span>
                 <ChevronDown size={14} />
               </button>
-              <HelpToggle compact className="icon-btn" />
+              <HelpToggle compact className="icon-btn header-help" />
               <IconButton
                 className="mobile-settings"
                 label="Settings"
@@ -339,11 +370,13 @@ export default function App() {
                   onProgress={() => navigate("progress")}
                   onStart={begin}
                   onBackup={() => navigate("settings")}
+                  onEquipment={() => setEquipmentOpen(true)}
                 />
               )}
               {tab === "train" && (
                 <Train
                   onLibrary={() => navigate("library")}
+                  onEquipment={() => setEquipmentOpen(true)}
                   onPlan={() => navigate("plan")}
                   onStart={begin}
                   onProgress={() => navigate("progress")}
@@ -498,6 +531,7 @@ export default function App() {
                       ),
                   ),
                   equipment,
+                  data.profile.avoid,
                 ).slice(0, 20);
                 return (
                   <Field
@@ -515,7 +549,10 @@ export default function App() {
                         setChoices({ ...choices, [p.id]: e.target.value })
                       }
                     >
-                      <option value="">Choose a substitute</option>
+                      <option value="">Choose a substitute or skip</option>
+                      <option value="__skip__">
+                        Skip this exercise for this workout
+                      </option>
                       {equipmentCompatibility(ex, equipment).compatible && (
                         <option value={ex.id}>
                           {ex.name} · choose a lower load during this session
@@ -523,14 +560,14 @@ export default function App() {
                       )}
                       {options.map((o) => (
                         <option key={o.id} value={o.id}>
-                          {o.name}
+                          {o.name} · {substitutionDetails(ex, o).reason}
                         </option>
                       ))}
                     </Select>
                     {!options.length && (
                       <span className="small muted">
-                        No suitable match. Edit the template in Plan or start an
-                        open workout.
+                        No equipment-compatible alternative is available. You
+                        can skip this exercise and continue the workout.
                       </span>
                     )}
                   </Field>
@@ -550,18 +587,40 @@ export default function App() {
     </ErrorBoundary>
   );
 }
+function EnvironmentButton({ onClick }: { onClick: () => void }) {
+  const { data } = useApp();
+  const equipment = data.equipment.find(
+    (item) => item.id === data.activeEquipmentId,
+  );
+  return (
+    <button
+      className="training-location"
+      data-help-topic="equipment"
+      aria-label={`Training equipment: ${equipment?.name}`}
+      onClick={onClick}
+    >
+      <MapPin size={15} aria-hidden="true" />
+      <span>
+        Training at <strong>{equipment?.name}</strong>
+      </span>
+      <span className="training-location-action">Change</span>
+    </button>
+  );
+}
 function Home({
   onTrain,
   onPlan,
   onProgress,
   onStart,
   onBackup,
+  onEquipment,
 }: {
   onTrain: () => void;
   onPlan: () => void;
   onProgress: () => void;
   onStart: (t: Template, s?: string) => void;
   onBackup: () => void;
+  onEquipment: () => void;
 }) {
   const { data } = useApp();
   const [selectedDay, setSelectedDay] = useState(dateKey());
@@ -609,6 +668,7 @@ function Home({
           {reminder.message}
         </div>
       )}
+      <EnvironmentButton onClick={onEquipment} />
       <div className="home-layout">
         <div className="home-main">
           <div className="home-day-picker" aria-label="This week's workouts">
@@ -757,11 +817,13 @@ function Home({
 }
 function Train({
   onLibrary,
+  onEquipment,
   onPlan,
   onStart,
   onProgress,
 }: {
   onLibrary: () => void;
+  onEquipment: () => void;
   onPlan: () => void;
   onStart: (t?: Template, scheduleId?: string) => void;
   onProgress: () => void;
@@ -769,15 +831,19 @@ function Train({
   const { data } = useApp();
   const [view, setView] = useState<"today" | "library">("today");
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<TemplateSort>("recent");
   const equipment = data.equipment.find(
     (item) => item.id === data.activeEquipmentId,
   )!;
-  const templates = data.templates.filter(
-    (template) =>
-      !template.archived &&
-      `${template.name} ${template.focus}`
-        .toLowerCase()
-        .includes(query.toLowerCase()),
+  const templates = sortTemplates(
+    data.templates.filter(
+      (template) =>
+        !template.archived &&
+        `${template.name} ${template.focus}`
+          .toLowerCase()
+          .includes(query.toLowerCase()),
+    ),
+    sort,
   );
   return (
     <div className="page train-page">
@@ -790,6 +856,7 @@ function Train({
           <Dumbbell size={18} aria-hidden="true" /> Exercise library
         </Button>
       </header>
+      <EnvironmentButton onClick={onEquipment} />
       <div
         className="segmented train-views"
         role="group"
@@ -831,6 +898,18 @@ function Train({
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Name or training focus"
             />
+          </Field>
+          <Field label="Sort workouts">
+            <Select
+              value={sort}
+              onValueChange={(value) => setSort(value as TemplateSort)}
+            >
+              {templateSortOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
           </Field>
           <div className="template-grid">
             {templates.map((template) => {

@@ -8,6 +8,7 @@ import type {
 } from "../domain/types";
 import { dateKey, id } from "../domain/helpers";
 import { equipmentOptions, starterExercises } from "./exercises";
+import { defaultWorkoutIcons } from "../domain/workoutIcons";
 
 export const defaultRule: ProgressionRule = {
   strategy: "double",
@@ -87,6 +88,7 @@ function template(
     name,
     description,
     focus,
+    icon: defaultWorkoutIcons[key],
     minutes,
     exercises: entries.map((entry) =>
       typeof entry === "string" ? prescribed(entry) : prescribed(...entry),

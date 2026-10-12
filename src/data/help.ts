@@ -213,6 +213,18 @@ export const helpTopics = {
     title: "Rest timer",
     body: "Time between efforts. You can adjust, pause or skip it to match your session. The timer cannot guarantee an alert while the app is closed or your phone has suspended it.",
   },
+  timedExercise: {
+    title: "Exercise timer",
+    body: "Measures how long you hold or perform this set. Countdown shows time left to your target; Stopwatch counts upward. Pause excludes that break, and Reset clears only the timer. Finish set records the measured duration. Reaching the target does not mark the set complete, and alerts may be unavailable in the background.",
+  },
+  workoutIcon: {
+    title: "Workout icon",
+    body: "Choose a symbol that helps you recognize this saved workout. The icon is a visual reminder; actual muscle targets come from its exercises. Save the workout to keep your choice.",
+  },
+  workoutSort: {
+    title: "Workout order",
+    body: "Recently saved puts new and edited workouts first. You can also arrange them by name, training focus or estimated duration. Sorting changes this list's order without changing a workout or its calendar dates.",
+  },
   bodyweight: {
     title: "Bodyweight measurement",
     body: "Your recorded body mass, stored separately from exercise resistance. The latest dated measurement can update bodyweight goals; the profile value is used when no measurement is available.",
@@ -331,6 +343,9 @@ export interface HelpControl {
 }
 
 const topicRules: [RegExp, HelpTopic][] = [
+  [/set \d+ timer|^countdown$|^stopwatch$|timer mode/i, "timedExercise"],
+  [/workout icon|^use .+ icon$/i, "workoutIcon"],
+  [/sort workouts/i, "workoutSort"],
   [/\brir\b|reps? in reserve/i, "rir"],
   [/\brpe\b|effort rating/i, "rpe"],
   [/e[ -]?1rm|estimated (?:one.rep|1rm|strength)|one.rep max/i, "e1rm"],
@@ -424,6 +439,24 @@ const topicRules: [RegExp, HelpTopic][] = [
 ];
 
 function actionDescription(label: string): string | undefined {
+  if (/^setwise home$/i.test(label))
+    return "Returns to Home so you can see the selected day's workouts and your saved training summary.";
+  if (/^get started$/i.test(label))
+    return "Opens optional setup. You can share your training preferences or use defaults, then edit them later in Settings.";
+  if (/^(?:start|pause|resume|reset|finish).+set \d+ timer$/i.test(label))
+    return /^finish/i.test(label)
+      ? "Completes this set with the duration the timer actually measured. You can undo the completed set to correct it."
+      : /^reset/i.test(label)
+        ? "Clears the measured time for this set without deleting its entered values or marking it complete."
+        : /^pause/i.test(label)
+          ? "Pauses measuring this set. Time spent paused is not included when you resume."
+          : /^resume/i.test(label)
+            ? "Continues measuring from the saved elapsed time, excluding time spent paused."
+            : "Starts measuring this set using the selected countdown or stopwatch mode. Finish set saves your actual duration.";
+  if (/^search open food facts$/i.test(label))
+    return "Sends this search to Open Food Facts for branded products. Your saved collection and USDA generic foods filter locally without needing this action.";
+  if (/^skip this exercise/i.test(label))
+    return "Leaves this movement in the workout as skipped. Its sets are not counted as completed work; the other exercises remain available.";
   if (/^(?:complete|undo).+set\b/i.test(label))
     return /^undo/i.test(label)
       ? "Marks this set as unfinished again. You can correct its entries and complete it later."

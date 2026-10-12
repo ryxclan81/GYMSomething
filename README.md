@@ -33,15 +33,16 @@ npm run preview
 
 ## What works
 
-- Five-step optional onboarding with quick defaults, visible grouped preferences, optional bodyweight and cm or feet/inches height, and multiple editable equipment inventories.
-- A bundled 728-exercise library with real source instructions, search/filters/favorites, custom exercises/media and attribution.
+- A welcome screen followed by five-step optional onboarding with quick defaults, visible grouped preferences, optional bodyweight and cm or feet/inches height, and multiple editable equipment inventories.
+- A bundled 728-exercise library with real source instructions, typo-tolerant search/filters/favorites, custom exercises/media and attribution.
 - Day-first Home and Train views listing every actual scheduled workout, selectable upcoming dates and clear rest/empty states; a separate Workout library supports unscheduled starts.
 - Fifteen base starter workouts, nine multiweek programs, dated application previews, keep/replace plan choices, optional weekly phases with separate editable targets, rest days and equipment substitutions.
-- Today's exercise overview and focused exercise logging with primary/secondary muscles, targets, prior values, effort/categories/notes, history edits, rest timers and interrupted-session recovery.
+- Today's exercise overview and focused exercise logging with primary/secondary muscles, targets, prior values, effort/notes, history edits, rest timers, persistent hold timers and interrupted-session recovery. Set categories remain available in secondary actions.
 - Saved-data trends, personal records, muscle-set analysis, configurable progression decisions, goals, body measurements, weekly streaks and optional milestones. Weight goals offer editable rate/weeks/date estimates, fixed manual deadlines and first reached dates from recorded history.
-- A visible Nutrition destination with explicit enablement, manual/cached foods, diary portions, recipes/saved meals, macros/water and Open Food Facts lookup.
+- A visible Nutrition destination with explicit enablement, 905 sourced offline USDA foods, manual/cached foods, diary portions, recipes/saved meals, macros/water and paginated Open Food Facts lookup.
 - Full JSON backup/validated restore, CSV exports, data deletion and cross-tab storage conflict protection.
-- Graphite dark surfaces with local Steel blue, Soft violet or Neutral accents and Comfortable/Compact spacing in Settings → Appearance.
+- Evergreen dark surfaces with Sage, Sky blue, Soft violet or Neutral accents and Comfortable/Compact spacing in Settings → Appearance. The mobile navigation reserves its own row so it cannot cover scrolling content.
+- A 22-icon workout picker, newest-first saved workouts with alternate sorts, and permanent template deletion that preserves recorded session snapshots.
 
 New installations start without fabricated completed workouts or statistics. Onboarding offers an optional two-week starter calendar using Automatic or a selected workout preset; these are editable planned entries. Program application preserves recorded/skipped/session-linked entries and explicit rest days. Equipment inventories and nutrient targets are editable examples. Training recommendations and time estimates use transparent configurable assumptions, not diagnoses or guaranteed outcomes.
 
@@ -57,7 +58,7 @@ Physical iPhone Safari installation, camera/speech services and native builds re
 
 Nutrition, AI, voice and Spotify are disabled initially. The Nutrition tab remains visible and offers an explicit enable action. Manual workouts and calculations do not depend on optional services.
 
-- **Food lookup:** Open Food Facts live requests plus cached/manual fallback. Public deployment needs its registration/identification terms satisfied; a proxy may be needed to set the required custom User-Agent.
+- **Food lookup:** Open Food Facts live requests plus cached/manual fallback and a bundled USDA generic-food catalog; see [food attribution](FOOD_ATTRIBUTION.md). Product coverage and label completeness vary. Public deployment needs Open Food Facts registration/identification terms satisfied; a proxy may be needed to set the required custom User-Agent.
 - **Camera/voice:** Feature-detected browser adapters with typed/manual fallbacks. Actual device permissions and browser services determine availability.
 - **AI:** A consent-aware secure endpoint adapter; no configured provider/backend, shared key or paid fallback. Enabling the switch alone does not supply an AI model.
 - **Spotify:** PKCE and Premium active-device playback controls require your developer app, registered redirect and permitted user. Open Spotify remains available without credentials.
@@ -85,6 +86,14 @@ npm run test:e2e
 Exact executed commands, passed/failed checks, browser coverage, offline verification and retained artifacts are in [TEST_REPORT.md](TEST_REPORT.md). These checks establish software behavior; they do not scientifically validate a training protocol or replace physical-device testing.
 
 ## Change log
+
+### 1.4.0 · 12 October 2026
+
+- Added a welcome screen with Get started, a clickable Home logo and a simpler mobile header. Changed the palette to evergreen and sage, opened up spacing, and reserved a real layout row for bottom navigation.
+- Added 22 selectable workout icons, newest-first sorting and permanent deletion with preserved logged history and active-session snapshots.
+- Improved equipment adaptation with ranked compatible alternatives and an explicit skip option; typo-tolerant searches find pushups and sit-ups.
+- Added persisted countdown/stopwatch controls for timed exercises; set categories are available through secondary actions.
+- Added 905 offline USDA foods and support for newer Open Food Facts nutrition responses, more search results, barcode variants and saved-food reuse.
 
 ### 1.3.0 · 11 October 2026
 

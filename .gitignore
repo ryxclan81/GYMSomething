@@ -12,6 +12,7 @@ artifacts/
 releases/
 .codex/
 .agents/
+.playwright-cli/
 __pycache__/
 .DS_Store
 ios/App/App.xcodeproj/xcuserdata/

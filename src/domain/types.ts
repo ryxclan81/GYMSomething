@@ -1,3 +1,4 @@
+import type { WorkoutIconId } from "./workoutIcons";
 export type Unit = "kg" | "lb";
 export type Focus =
   | "Hypertrophy"
@@ -60,7 +61,8 @@ export interface Profile {
   celebrations: boolean;
   indirectFactor: number;
   onboardingComplete: boolean;
-  accent?: "steel" | "violet" | "neutral";
+  accent?: "sage" | "steel" | "violet" | "neutral";
+  welcomeStarted?: boolean;
   density?: "comfortable" | "compact";
 }
 export interface Exercise {
@@ -132,6 +134,7 @@ export interface Template {
   exercises: Prescription[];
   archived?: boolean;
   updatedAt: string;
+  icon?: WorkoutIconId;
   planningSource?: {
     programId: string;
     templateId: string;
@@ -223,6 +226,14 @@ export interface Session {
   restEndsAt?: number;
   restPausedSeconds?: number;
   focusedExerciseId?: string;
+  setTimer?: {
+    exerciseId: string;
+    setId: string;
+    mode: "countdown" | "stopwatch";
+    elapsedMs: number;
+    startedAt?: number;
+    targetSeconds: number;
+  };
 }
 export interface GoalTimeline {
   mode: "rate" | "weeks";

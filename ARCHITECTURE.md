@@ -2,6 +2,8 @@
 
 Setwise is a local-first React/TypeScript PWA. The web app runs without an account or server for workouts, planning, analytics and manual nutrition. A Capacitor iOS source project is generated at `ios/App/App.xcodeproj`, with Swift Package Manager and a copied web bundle. No Xcode build, signing, simulator/device run or native health integration was tested in this Windows environment.
 
+The welcome screen precedes optional setup. On mobile, navigation reserves a separate row while the content pane scrolls, keeping the final content clear of the footer. Equipment adaptation uses ranked alternatives with stated rationale and an explicit skip choice.
+
 ## Modules
 
 | Area                    | Implementation                                                                                                              | Responsibility                                                                                                                                  |
@@ -23,6 +25,8 @@ Setwise is a local-first React/TypeScript PWA. The web app runs without an accou
 | Optional adapters       | `src/integrations/*`                                                                                                        | Food lookup/scanning, speech, AI endpoint, Spotify, reminders/calendar and native capability boundaries                                         |
 | Settings                | `src/screens/Settings.tsx`                                                                                                  | Profile/inventory editing, local accent/spacing preferences, toggles, permissions, integrations, backups and privacy controls                   |
 | Packaging/tests         | `vite.config.ts`, `capacitor.config.ts`, `ios/App/`, `vitest.config.ts`, `playwright.config.ts`, `tests/`                   | Production assets, PWA, generated iOS source project, domain/persistence tests and browser journeys                                             |
+
+Additional domain modules: `src/domain/search.ts` ranks typo-tolerant exercise matches; `src/domain/templates.ts` handles sorting and snapshot-preserving deletion; `src/domain/workoutIcons.ts` describes the 22-glyph picker; `src/domain/timer.ts` computes epoch-based timed-set state. The read-only `src/data/foods.ts` catalog enters local records only when a food is chosen. `src/evergreen.css`, `src/planning-ui.css` and `src/timed-exercise.css` provide the current visual rules.
 
 Plain CSS implements the design tokens rather than introducing Tailwind. Native inputs/dialogs and custom Radix Select menus provide the component foundation. Numeric controls keep their editable text separate from the displayed persisted number. Screen navigation uses lightweight application state rather than React Router: all destinations share the root URL. Charts are accessible SVG with inspectable data tables rather than Recharts. Training calculations remain outside components.
 

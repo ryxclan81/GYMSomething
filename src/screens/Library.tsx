@@ -23,6 +23,7 @@ import {
 import { useApp, updateData } from "../state/store";
 import { Sheet, toast } from "../components/ui";
 import { NumberField, RuleEditor } from "./TrainingRules";
+import { searchExercises } from "../domain/search";
 
 const splitList = (value: string) =>
   value
@@ -131,8 +132,8 @@ export function Library({
       [...new Set(data.exercises.map((e) => e.pattern).filter(Boolean))].sort(),
     [data.exercises],
   );
-  const shown = data.exercises
-    .filter(
+  const shown = searchExercises(
+    data.exercises.filter(
       (e) =>
         (archived ? e.archived : !e.archived) &&
         (!favorite || e.favorite) &&
@@ -146,16 +147,10 @@ export function Library({
         (!equipment || e.equipment.includes(equipment)) &&
         (!available || missing(e).length === 0) &&
         (!bodyweight || e.load === "none") &&
-        (!hideAvoided || !data.profile.avoid.includes(e.id)) &&
-        `${e.name} ${e.aliases.join(" ")} ${e.primary.join(" ")} ${e.secondary.join(" ")} ${e.pattern} ${e.equipment.join(" ")} ${e.category} ${e.tags?.join(" ") ?? ""}`
-          .toLowerCase()
-          .includes(query.toLowerCase()),
-    )
-    .sort(
-      (a, b) =>
-        Number(Boolean(b.favorite)) - Number(Boolean(a.favorite)) ||
-        a.name.localeCompare(b.name),
-    );
+        (!hideAvoided || !data.profile.avoid.includes(e.id)),
+    ),
+    query,
+  );
   const toggleFavorite = async (e: Exercise) => {
     await updateData((d) => {
       const ex = d.exercises.find((x) => x.id === e.id);
@@ -209,9 +204,16 @@ export function Library({
         <label className="search-input">
           <Search size={18} />
           <input
+            name="exercise-search"
+            autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search movements, muscles, equipment"
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setVisibleCount(60);
+            }}
+            placeholder="Search movements, muscles or equipment…"
             aria-label="Search exercises"
           />
           {query && (

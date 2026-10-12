@@ -1,5 +1,28 @@
 # Setwise validation report
 
+Setwise **1.4.0** verification: **October 12, 2026**.
+
+## Current results
+
+- TypeScript, ESLint, production build and whitespace checks pass.
+- **343 unit/integration tests pass in 18 files**, covering persistence, training, search, substitutions, workout management, icons, help, timers, food normalization and the offline catalog.
+- **14 Python food-importer tests pass**. Regeneration from the checksum-verified USDA archive is byte-identical to the generated 905-food catalog. Forty common food references are guaranteed despite category limits.
+- **46 browser journeys pass in one complete final run**, with zero failures, against the frozen 1.4 production build in installed Chrome on Windows. The run took approximately 1.5 minutes. Test records and mocked food-provider responses are isolated from user records.
+- New journeys cover Welcome/Get started/setup reload, clickable Home logo, exactly two visible mobile header buttons, footer clearance at 320/393/740 widths, home calisthenics with an explicit skip, and typo queries including `psuh`, `situps` and `sutups`.
+- Workout-management journeys cover 22 selectable icons, keyboard selection, recent/name sorting, save/reload, canceled deletion, permanent deletion, and finishing a resumed workout after its template is gone while retaining prior history. Program padding and small-phone/landscape icon targets pass automated accessibility checks.
+- Timed-set journeys cover pause/reload/resume, actual-duration logging, reset/manual entry, a running countdown across reload, visible overtime and no automatic set completion. Food journeys cover modern v3 normalized facts without legacy fields or optional fiber, unknown-label manual entry, UPC-padding offline reuse, offline USDA selection and fetching a second provider search page.
+- Automated accessibility checks pass in the tested Welcome, Home, onboarding, planning, icon, deletion, focused logging, timer, food-search and other existing test regions. Checked-control contrast passes for Sage, Sky blue, Violet and Neutral. These are scoped browser results, not an accessibility certification.
+- A separate `/GYMSomething/` production build passes manifest/icons/service-worker scope, missing-asset and outside-base request checks. A logged set survives full offline reload/resume with no page errors. Evidence: `artifacts/pages-smoke-result.json`.
+- Capacitor iOS synchronization passes; the current web assets are copied into the generated source. Native Xcode compilation, signing, physical iPhone/Safari/VoiceOver and camera scanning remain untested in this Windows environment. Hosted-site browser verification is skipped at the user's request; GitHub Actions confirms publishing separately.
+
+The main chunk is approximately 2.02 MB, 372 KB gzipped. Nutrition is a separate 385.6 KB chunk, 47 KB gzipped, containing the read-only generic food catalog. The precache includes 30 entries, approximately 3.05 MiB. Vite's chunk-size advisory is not a failed build.
+
+Executed commands include `tsc -b`, `eslint .`, `vitest run`, `scripts/test_build_food_catalog.py`, `vite build`, `playwright test --output artifacts/setwise-1.4-final --reporter list`, the local project-path smoke script, and `cap sync ios`. Local screenshots/traces are retained in `artifacts/setwise-1.4-final` and `artifacts/screenshots`, excluded from GitHub source. Playwright CLI was also used for a separate local mobile Welcome snapshot/screenshot.
+
+The final suite has no failing tests. Earlier checks exposed stale test selectors after moving mobile equipment selection and a lazy-screen timing race in a new nutrition test; the tests were corrected. The offline-food journey also found a real catalog-coverage gap, corrected by guaranteed common-food references.
+
+## Historical 1.3.0 verification
+
 Setwise **1.3.0** verification: **October 12, 2026**.
 
 ## Current results

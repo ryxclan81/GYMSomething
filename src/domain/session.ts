@@ -17,7 +17,7 @@ export function makeSet(p: Prescription, previous?: WorkoutSet): WorkoutSet {
     rpe: previous?.rpe ?? p.rpe,
     durationSeconds: previous?.durationSeconds ?? p.durationSeconds,
     distanceKm: previous?.distanceKm ?? p.distanceKm,
-    type: "working",
+    type: previous?.type ?? "working",
     completed: false,
     skipped: false,
   };
@@ -33,12 +33,12 @@ export function makeSessionExercise(
     exercise: structuredClone(exercise),
     prescription: structuredClone(p),
     sets: Array.from({ length: p.sets }, (_, i) => {
-      const set = makeSet(
-        p,
-        previous?.sets.filter(
-          (s) => s.completed && !s.skipped && s.type !== "warmup",
-        )[i],
-      );
+      const prior = previous?.sets.filter(
+        (s) => s.completed && !s.skipped && s.type !== "warmup",
+      )[i];
+      const set = makeSet(p, prior);
+      if (!prior && ["duration", "cardio"].includes(exercise.measurement))
+        set.type = "timed";
       if (previous) {
         if (p.weightKg !== previous.prescription.weightKg)
           set.weightKg = p.weightKg;

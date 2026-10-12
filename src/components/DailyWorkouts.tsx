@@ -1,3 +1,4 @@
+import { scheduledSession } from "../domain/templates";
 import { CalendarDays, Check, ChevronRight, Clock } from "lucide-react";
 import WorkoutIcon from "./WorkoutIcon";
 import type { Template } from "../domain/types";
@@ -57,9 +58,32 @@ export function DailyWorkouts({
       ) : (
         <div className="daily-workout-list">
           {workouts.map((entry) => {
-            const template = data.templates.find(
-              (item) => item.id === entry.templateId,
-            );
+            const snapshot = scheduledSession(data, entry);
+            const template =
+              data.templates.find((item) => item.id === entry.templateId) ??
+              (snapshot
+                ? {
+                    id: snapshot.templateId ?? snapshot.id,
+                    name: snapshot.name,
+                    description:
+                      "Saved workout; the original template was deleted.",
+                    focus: "General fitness" as const,
+                    minutes: snapshot.completedAt
+                      ? Math.max(
+                          0,
+                          Math.round(
+                            (Date.parse(snapshot.completedAt) -
+                              Date.parse(snapshot.startedAt)) /
+                              60000,
+                          ),
+                        )
+                      : 0,
+                    updatedAt: snapshot.startedAt,
+                    exercises: snapshot.exercises.map(
+                      (item) => item.prescription,
+                    ),
+                  }
+                : undefined);
             if (!template) return null;
             const active = data.activeSession?.scheduleId === entry.id;
             const planned = entry.status === "planned";

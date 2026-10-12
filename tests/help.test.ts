@@ -57,6 +57,15 @@ describe("Beginner control explanations", () => {
   );
 
   it.each([
+    ["Start Plank set 1 timer", "Starts measuring", "Finish set"],
+    ["Pause Plank set 1 timer", "Pauses measuring", "not included"],
+    [
+      "Finish Plank set 1 timer",
+      "duration the timer actually measured",
+      "undo",
+    ],
+    ["Setwise home", "Returns to Home", "workouts"],
+    ["Get started", "Opens optional setup", "defaults"],
     ["Start Full Body A", "Begins a session", "actual weights"],
     ["Complete Bench Press set 1", "Marks this set as done", "undo"],
     ["Undo Bench Press set 1", "unfinished again", "correct"],

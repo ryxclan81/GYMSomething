@@ -113,7 +113,11 @@ test("home environment shows compatible substitutions and never transfers loads"
 }) => {
   await onboard(page);
   await page
-    .getByRole("button", { name: "Commercial Gym", exact: true })
+    .locator(".home-page")
+    .getByRole("button", {
+      name: "Training equipment: Commercial Gym",
+      exact: true,
+    })
     .click();
   await page
     .getByRole("button", { name: /Home Essentials.*equipment types/ })
@@ -127,7 +131,10 @@ test("home environment shows compatible substitutions and never transfers loads"
   await expect(dialog).toBeVisible();
   for (const select of await dialog.getByRole("combobox").all()) {
     await select.click();
-    const option = page.getByRole("option").nth(1);
+    const option = page
+      .getByRole("option")
+      .filter({ hasNotText: /Choose a substitute|Skip this exercise/ })
+      .first();
     await expect(option).toHaveAttribute("data-value", /.+/);
     await option.click();
   }
@@ -254,7 +261,7 @@ test("backup export, clear and restore preserves active workout data", async ({
   await formControl(page, "Type DELETE to confirm").fill("DELETE");
   await page.getByRole("button", { name: "Confirm", exact: true }).click();
   await expect(
-    page.getByRole("dialog", { name: "Welcome to Setwise" }),
+    page.getByRole("button", { name: "Get started", exact: true }),
   ).toBeVisible();
   await page.reload();
   await onboardAfterReload(page);
@@ -331,6 +338,7 @@ test("a full local store preserves saved records and exports unsaved workout edi
 });
 
 async function onboardAfterReload(page: Page) {
+  await page.getByRole("button", { name: "Get started", exact: true }).click();
   await page.getByRole("button", { name: "Use defaults", exact: true }).click();
   await page.getByRole("button", { name: "Let’s get started" }).click();
 }
