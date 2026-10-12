@@ -28,6 +28,11 @@ import { Button, Field, Sheet, toast } from "./ui";
 import { Select, NumericInput } from "./inputs";
 
 import HeightInput from "./HeightInput";
+import EquipmentInventory from "./EquipmentInventory";
+import {
+  NO_EQUIPMENT,
+  normalizeEquipmentSelection,
+} from "../domain/equipmentSelection";
 
 import { applyProgram, alignTrainingDays } from "../domain/planning";
 
@@ -175,10 +180,6 @@ export default function Onboarding({ onDone }: { onDone?: () => void }) {
   const environment =
     environments.find((e) => e.id === equipmentId) ?? environments[0];
 
-  const equipmentItems = [
-    ...new Set([...equipmentOptions, ...environment.items]),
-  ].sort();
-
   const editEquipment = (patch: Partial<EquipmentProfile>) =>
     setEnvironments((previous) =>
       previous.map((e) => (e.id === equipmentId ? { ...e, ...patch } : e)),
@@ -240,7 +241,11 @@ export default function Onboarding({ onDone }: { onDone?: () => void }) {
           onboardingComplete: true,
         };
 
-        d.equipment = environments.map((e) => ({ ...e, name: e.name.trim() }));
+        d.equipment = environments.map((e) => ({
+          ...e,
+          name: e.name.trim(),
+          items: normalizeEquipmentSelection(e.items),
+        }));
 
         d.activeEquipmentId = equipmentId;
 
@@ -784,30 +789,16 @@ export default function Onboarding({ onDone }: { onDone?: () => void }) {
                     />
                   </Field>
 
-                  <div className="setup-inventory">
-                    {equipmentItems.map((item) => (
-                      <label key={item}>
-                        <input
-                          type="checkbox"
+                  <EquipmentInventory
+                    options={equipmentOptions}
+                    items={environment.items}
+                    onChange={(items) => editEquipment({ items })}
+                  />
 
-                          checked={environment.items.includes(item)}
-
-                          onChange={(e) =>
-                            editEquipment({
-                              items: e.target.checked
-                                ? [...environment.items, item]
-                                : environment.items.filter(
-                                    (value) => value !== item,
-                                  ),
-                            })
-                          }
-                        />
-
-                        <span>{item}</span>
-                      </label>
-                    ))}
-                  </div>
-
+                  <fieldset
+                    className="equipment-profile-details"
+                    disabled={environment.items.includes(NO_EQUIPMENT)}
+                  >
                   <Field
                     label={`Maximum dumbbell weight (${p.unit} each), optional`}
                   >
@@ -849,6 +840,7 @@ export default function Onboarding({ onDone }: { onDone?: () => void }) {
 
                     <span>Bench can incline</span>
                   </label>
+                  </fieldset>
 
                   <Field label="Equipment notes (optional)">
                     <textarea

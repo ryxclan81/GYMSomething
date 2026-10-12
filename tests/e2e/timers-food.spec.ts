@@ -97,9 +97,7 @@ test("hold timing survives pause/reload, excludes paused time and records actual
   await page
     .getByRole("button", { name: "Complete Plank set 2", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "All exercises", exact: true })
-    .click();
+  await expect(page.locator(".workout-overview-card")).toHaveCount(1);
   await page
     .getByRole("button", { name: "Finish workout", exact: true })
     .click();

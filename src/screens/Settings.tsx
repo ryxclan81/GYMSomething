@@ -25,6 +25,11 @@ import type {
 import { dateKey, id } from "../domain/helpers";
 import { fromKg, toKg } from "../domain/engine";
 import HeightInput from "../components/HeightInput";
+import EquipmentInventory from "../components/EquipmentInventory";
+import {
+  NO_EQUIPMENT,
+  normalizeEquipmentSelection,
+} from "../domain/equipmentSelection";
 import {
   useApp,
   updateData,
@@ -285,7 +290,7 @@ export default function Settings({
         />
       </section>
       <section className="section">
-        <p className="eyebrow">Setwise 1.3</p>
+        <p className="eyebrow">Setwise 1.4.1</p>
         <p className="muted">
           Dark mode. No account required. Motion follows your device’s
           reduced-motion setting. Optional tools never remove saved records when
@@ -767,16 +772,15 @@ function EquipmentEditor({
 }) {
   const [e, setE] = useState(value),
     [custom, setCustom] = useState("");
-  const items = [
-    ...new Set([...data.exercises.flatMap((x) => x.equipment), ...e.items]),
-  ].sort();
+  const equipmentFree = e.items.includes(NO_EQUIPMENT);
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     try {
       await updateData((d) => {
         const i = d.equipment.findIndex((x) => x.id === e.id);
-        if (i >= 0) d.equipment[i] = e;
-        else d.equipment.push(e);
+        const saved = { ...e, items: normalizeEquipmentSelection(e.items) };
+        if (i >= 0) d.equipment[i] = saved;
+        else d.equipment.push(saved);
       });
       toast("Equipment environment saved");
       onClose();
@@ -796,82 +800,75 @@ function EquipmentEditor({
           />
         </Field>
         <p className="muted">
-          Select the equipment you can use. An empty inventory supports
-          equipment-free exercises.
+          Select the equipment you can use, or choose No equipment for
+          bodyweight exercises.
         </p>
-        <div className="grid-2">
-          {items.map((item) => (
-            <label className="row" key={item}>
+        <EquipmentInventory
+          options={data.exercises.flatMap((x) => x.equipment)}
+          items={e.items}
+          onChange={(items) => setE({ ...e, items })}
+        />
+        <fieldset
+          className="equipment-profile-details"
+          disabled={equipmentFree}
+        >
+          <Field label="Custom equipment">
+            <div className="row">
               <input
-                type="checkbox"
-                checked={e.items.includes(item)}
-                onChange={(event) =>
+                aria-label="Custom equipment"
+                disabled={equipmentFree}
+                value={custom}
+                onChange={(event) => setCustom(event.target.value)}
+                placeholder="e.g. landmine attachment"
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={equipmentFree || !custom.trim()}
+                onClick={() => {
                   setE({
                     ...e,
-                    items: event.target.checked
-                      ? [...e.items, item]
-                      : e.items.filter((i) => i !== item),
-                  })
-                }
-              />
-              <span>{item.replace(/-/g, " ")}</span>
-            </label>
-          ))}
-        </div>
-        <Field label="Custom equipment">
-          <div className="row">
-            <input
-              aria-label="Custom equipment"
-              value={custom}
-              onChange={(event) => setCustom(event.target.value)}
-              placeholder="e.g. landmine attachment"
-            />
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={!custom.trim()}
-              onClick={() => {
+                    items: [
+                      ...new Set([...e.items, custom.trim().toLowerCase()]),
+                    ],
+                  });
+                  setCustom("");
+                }}
+              >
+                Add
+              </Button>
+            </div>
+          </Field>
+          <Field
+            label={`Maximum dumbbell weight (${data.profile.unit} each), optional`}
+          >
+            <NumericInput
+              min="0.1"
+              max={data.profile.unit === "kg" ? 200 : 440}
+              step="0.1"
+              value={
+                e.maxDumbbellKg === undefined
+                  ? ""
+                  : Math.round(
+                      fromKg(e.maxDumbbellKg, data.profile.unit) * 10,
+                    ) / 10
+              }
+              onChange={(event) =>
                 setE({
                   ...e,
-                  items: [
-                    ...new Set([...e.items, custom.trim().toLowerCase()]),
-                  ],
-                });
-                setCustom("");
-              }}
-            >
-              Add
-            </Button>
-          </div>
-        </Field>
-        <Field
-          label={`Maximum dumbbell weight (${data.profile.unit} each), optional`}
-        >
-          <NumericInput
-            min="0.1"
-            max={data.profile.unit === "kg" ? 200 : 440}
-            step="0.1"
-            value={
-              e.maxDumbbellKg === undefined
-                ? ""
-                : Math.round(fromKg(e.maxDumbbellKg, data.profile.unit) * 10) /
-                  10
-            }
-            onChange={(event) =>
-              setE({
-                ...e,
-                maxDumbbellKg: event.target.value
-                  ? toKg(Number(event.target.value), data.profile.unit)
-                  : undefined,
-              })
-            }
+                  maxDumbbellKg: event.target.value
+                    ? toKg(Number(event.target.value), data.profile.unit)
+                    : undefined,
+                })
+              }
+            />
+          </Field>
+          <Toggle
+            label="Bench can incline"
+            checked={e.canIncline}
+            onChange={(v) => setE({ ...e, canIncline: v })}
           />
-        </Field>
-        <Toggle
-          label="Bench can incline"
-          checked={e.canIncline}
-          onChange={(v) => setE({ ...e, canIncline: v })}
-        />
+        </fieldset>
         <Field label="Equipment notes and constraints">
           <textarea
             value={e.notes}

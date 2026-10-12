@@ -280,6 +280,15 @@ select {
 .help-popover {
   border-color: var(--line-strong) !important;
 }
+.saved-workout-feedback {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.saved-workout-feedback > span {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
 .welcome-page {
   max-width: 1200px;
   min-height: 100dvh;

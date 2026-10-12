@@ -176,7 +176,7 @@ test("two workouts on one day remain selectable and the chosen calendar entry su
     .click();
   await page.getByRole("button", { name: "Save workout", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Work put in." }),
+    page.getByRole("heading", { name: "Let’s train.", exact: true }),
   ).toBeVisible();
   data = await persisted(page);
   expect(data.sessions[0].scheduleId).toBe(chosen.id);

@@ -544,6 +544,12 @@ test("workout overview opens a persistent focused exercise and preserves clearab
     .click();
   await page.getByRole("button", { name: "Save workout", exact: true }).click();
   await expect(
+    page.getByRole("heading", { name: "Let’s train.", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Review saved workout", exact: true })
+    .click();
+  await expect(
     page.getByRole("heading", { name: "Work put in." }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Edit workout", exact: true }).click();

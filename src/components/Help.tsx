@@ -24,6 +24,7 @@ import {
 const CONTROL_SELECTOR =
   'button,input:not([type="hidden"]),select,textarea,a[href],summary,[role="button"],[role="checkbox"],[role="switch"],[role="combobox"],[role="tab"],[role="option"],[data-help-topic]';
 const CHROME_SELECTOR = "[data-help-ignore],[data-help-chrome]";
+const HOVER_DELAY_MS = 700;
 
 function elementFromTarget(target: EventTarget | null) {
   return target instanceof Element
@@ -179,7 +180,17 @@ export function HelpProvider({ children }: { children: ReactNode }) {
   const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
   );
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+  const hoverSource = useRef<HTMLElement | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  const cancelHover = useCallback(() => {
+    if (hoverTimer.current !== undefined) clearTimeout(hoverTimer.current);
+    hoverTimer.current = undefined;
+    hoverSource.current = null;
+  }, []);
 
   const cancelClose = useCallback(() => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
@@ -189,6 +200,7 @@ export function HelpProvider({ children }: { children: ReactNode }) {
   const dismissHelp = useCallback(
     (restoreFocus = false) => {
       cancelClose();
+      cancelHover();
       const current = activeRef.current;
       if (current) removeDescription(current.source, tooltipId);
       activeRef.current = null;
@@ -202,12 +214,13 @@ export function HelpProvider({ children }: { children: ReactNode }) {
         current.source.focus({ preventScroll: true });
       }
     },
-    [cancelClose, tooltipId],
+    [cancelClose, cancelHover, tooltipId],
   );
 
   const showHelp = useCallback(
     (source: HTMLElement, options: ShowOptions = {}) => {
       cancelClose();
+      cancelHover();
       const previous = activeRef.current;
       if (previous) removeDescription(previous.source, tooltipId);
       const annotated = source.closest<HTMLElement>(
@@ -250,7 +263,7 @@ export function HelpProvider({ children }: { children: ReactNode }) {
       activeRef.current = next;
       setActive(next);
     },
-    [cancelClose, tooltipId],
+    [cancelClose, cancelHover, tooltipId],
   );
 
   const setExplaining = useCallback(
@@ -306,9 +319,34 @@ export function HelpProvider({ children }: { children: ReactNode }) {
           control.contains(event.relatedTarget))
       )
         return;
-      if (!activeRef.current?.pinned) showHelp(control, { pinned: false });
+      if (activeRef.current?.pinned) return;
+      // Moving between options dismisses the previous explanation immediately.
+      // Each new control gets its own deliberate hover delay.
+      dismissHelp();
+      hoverSource.current = control;
+      hoverTimer.current = setTimeout(() => {
+        if (
+          hoverSource.current === control &&
+          control.isConnected &&
+          !modeRef.current &&
+          !activeRef.current?.pinned
+        )
+          showHelp(control, { pinned: false });
+      }, HOVER_DELAY_MS);
     };
     const onPointerOut = (event: PointerEvent) => {
+      const pending = hoverSource.current;
+      const target = elementFromTarget(event.target);
+      if (
+        pending &&
+        target &&
+        pending.contains(target) &&
+        !(
+          event.relatedTarget instanceof Node &&
+          pending.contains(event.relatedTarget)
+        )
+      )
+        cancelHover();
       const current = activeRef.current;
       if (!current || current.pinned) return;
       if (
@@ -405,10 +443,18 @@ export function HelpProvider({ children }: { children: ReactNode }) {
       document.removeEventListener("drop", onEdit, true);
       document.removeEventListener("scroll", onScroll, true);
       cancelClose();
+      cancelHover();
       if (activeRef.current)
         removeDescription(activeRef.current.source, tooltipId);
     };
-  }, [cancelClose, dismissHelp, setExplaining, showHelp, tooltipId]);
+  }, [
+    cancelClose,
+    cancelHover,
+    dismissHelp,
+    setExplaining,
+    showHelp,
+    tooltipId,
+  ]);
 
   useLayoutEffect(() => {
     if (!active) return;
@@ -438,17 +484,23 @@ export function HelpProvider({ children }: { children: ReactNode }) {
           view.top + view.height,
           dialogRect?.bottom ?? view.top + view.height,
         ) - 12;
-      const width = Math.min(360, Math.max(160, right - left));
+      const width = Math.min(
+        active.pinned ? 360 : 300,
+        Math.max(160, right - left),
+      );
       card.style.width = `${width}px`;
       card.style.maxHeight = `${Math.max(100, bottom - top)}px`;
       const height = card.getBoundingClientRect().height;
       const anchor = active.source.getBoundingClientRect();
       const x = Math.min(Math.max(left, anchor.left), right - width);
+      const above = anchor.top - height - 10;
       const below = anchor.bottom + 10;
       const y =
-        below + height <= bottom
-          ? below
-          : Math.max(top, anchor.top - height - 10);
+        above >= top
+          ? above
+          : below + height <= bottom
+            ? below
+            : Math.max(top, above);
       card.style.left = `${x}px`;
       card.style.top = `${Math.min(y, bottom - height)}px`;
     };
@@ -496,6 +548,9 @@ export function HelpProvider({ children }: { children: ReactNode }) {
     boxShadow: "0 12px 36px #0007",
     fontSize: 15,
     lineHeight: 1.55,
+    // Passive explanations never intercept the option or field beneath them.
+    // Explicitly opened Help cards retain their close/exit/scroll controls.
+    pointerEvents: active?.pinned ? "auto" : "none",
   };
 
   return (

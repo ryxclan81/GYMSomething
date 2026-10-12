@@ -118,6 +118,7 @@ export default function App() {
     [equipmentOpen, setEquipmentOpen] = useState(false),
     [offline, setOffline] = useState(!navigator.onLine),
     [summary, setSummary] = useState<Session | null>(null),
+    [lastSaved, setLastSaved] = useState<Session | null>(null),
     [editing, setEditing] = useState<Session | null>(null);
   const [exerciseFocused, setExerciseFocused] = useState(false);
   const [startingSetup, setStartingSetup] = useState(false);
@@ -223,8 +224,16 @@ export default function App() {
   }
   function finished(session: Session) {
     setSummary(session);
+    const corrected = Boolean(editing);
     setEditing(null);
-    setTab("summary");
+    setExerciseFocused(false);
+    if (corrected) {
+      setTab("summary");
+    } else {
+      setLastSaved(session);
+      setTab("train");
+      toast("Workout saved. Choose your next workout when you’re ready.");
+    }
   }
   if (!ready)
     return (
@@ -380,6 +389,19 @@ export default function App() {
                   onPlan={() => navigate("plan")}
                   onStart={begin}
                   onProgress={() => navigate("progress")}
+                  savedSession={
+                    data.sessions.find(
+                      (session) => session.id === lastSaved?.id,
+                    ) ?? null
+                  }
+                  onReviewSaved={() => {
+                    const saved = data.sessions.find(
+                      (session) => session.id === lastSaved?.id,
+                    );
+                    if (!saved) return;
+                    setSummary(saved);
+                    setTab("summary");
+                  }}
                 />
               )}
               {tab === "plan" && <Plan onStart={begin} />}
@@ -821,12 +843,16 @@ function Train({
   onPlan,
   onStart,
   onProgress,
+  savedSession,
+  onReviewSaved,
 }: {
   onLibrary: () => void;
   onEquipment: () => void;
   onPlan: () => void;
   onStart: (t?: Template, scheduleId?: string) => void;
   onProgress: () => void;
+  savedSession: Session | null;
+  onReviewSaved: () => void;
 }) {
   const { data } = useApp();
   const [view, setView] = useState<"today" | "library">("today");
@@ -857,6 +883,14 @@ function Train({
         </Button>
       </header>
       <EnvironmentButton onClick={onEquipment} />
+      {savedSession && (
+        <div className="section-heading saved-workout-feedback">
+          <span className="small muted">Saved · {savedSession.name}</span>
+          <button className="text-btn" onClick={onReviewSaved}>
+            Review saved workout
+          </button>
+        </div>
+      )}
       <div
         className="segmented train-views"
         role="group"

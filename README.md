@@ -87,6 +87,12 @@ Exact executed commands, passed/failed checks, browser coverage, offline verific
 
 ## Change log
 
+### 1.4.1 · 12 October 2026
+
+- Put No equipment first in onboarding and equipment editing. It clears and disables other equipment choices until unchecked.
+- Added a 700 ms hover-help delay, canceled pending help when leaving a control, and made passive explanations click-through. Explicit help and keyboard explanations remain available.
+- Completing an exercise's final set returns to the exercise overview with rest and logged values preserved. Saving a new session returns to Today's workout selection; its summary is available through Review saved workout.
+
 ### 1.4.0 · 12 October 2026
 
 - Added a welcome screen with Get started, a clickable Home logo and a simpler mobile header. Changed the palette to evergreen and sage, opened up spacing, and reserved a real layout row for bottom navigation.

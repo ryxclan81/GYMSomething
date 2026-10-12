@@ -163,6 +163,10 @@ export default function Workout({
   const isFocused = Boolean(focused);
   useEffect(() => {
     onFocusChange?.(isFocused);
+    window.scrollTo({ top: 0, behavior: "instant" });
+    document
+      .querySelector(".app-content")
+      ?.scrollTo({ top: 0, behavior: "instant" });
   }, [isFocused, onFocusChange]);
   useEffect(() => () => onFocusChange?.(false), [onFocusChange]);
   useEffect(() => {
@@ -316,6 +320,14 @@ export default function Workout({
         if (groupRoundDone) {
           s.restEndsAt = Date.now() + exercise.prescription.restSeconds * 1000;
           s.restPausedSeconds = undefined;
+        }
+        if (
+          s.focusedExerciseId === exercise.id &&
+          s.exercises
+            .find((entry) => entry.id === exercise.id)
+            ?.sets.every((item) => item.completed || item.skipped)
+        ) {
+          s.focusedExerciseId = undefined;
         }
       }
     });

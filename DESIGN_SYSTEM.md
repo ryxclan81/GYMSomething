@@ -45,6 +45,7 @@ The viewport includes `viewport-fit=cover`. Navigation/sheets incorporate iPhone
 - `Select`: styled Radix menus with keyboard navigation/typeahead, selected indicators, disabled options, scroll controls and dialog-aware portals.
 - `NumericInput`: keeps editable text separate from the displayed numeric value; focus selects the current value and clearing/replacing zero remains possible. Blur reconciles with the saved value.
 - `HeightInput`: optional cm or separately labeled Feet/Inches fields following the profile units; switching display preserves the canonical cm measurement.
+- `EquipmentInventory`: No equipment is the first choice. Selecting it clears other choices and disables their controls, custom additions and equipment-specific settings until unchecked.
 - `Sheet`: native modal `<dialog>` with a close button, Escape support, backdrop and constrained scrolling; browser dialog behavior provides modal focus handling.
 - `Empty`: plain, descriptive empty-state text and an optional action.
 - `Toasts`: short feedback in a polite live region.
@@ -72,6 +73,10 @@ Today's overview lists each movement's primary/secondary muscles, planned sets/r
 Stored load conventions are labeled beside targets (per dumbbell, total, added load, machine stack or assistance). Cardio shows editable minutes/km while persisted duration remains seconds; isometric holds use seconds. Completion uses check states with accessible pressed labels. Warm-up/skipped states remain visible rather than disappearing from history. Prior performance stays secondary to current inputs.
 
 The rest timer uses a large readable countdown plus start/pause/reset and ±30 second actions. A timestamp drives elapsed time. Haptic feedback is attempted only where supported; the PWA does not claim guaranteed iPhone vibration or background alert delivery. Group names support superset/circuit organization without hiding the underlying exercises/sets.
+
+Completing a focused exercise's last unfinished set returns to the overview so the next movement can follow available equipment rather than the plan's order. Rest and recorded values stay intact. Saving a new workout returns to Train → Today with a compact review action; historical corrections keep the summary view.
+
+Passive mouse explanations wait 700 ms, cancel when the pointer leaves, and restart the delay on a different control. The narrower passive card prefers space above its source and passes clicks through to the underlying interface. Keyboard focus and explicitly opened explanations remain immediate; explicit cards retain their close, exit and scroll controls.
 
 ## Data presentation
 

@@ -260,7 +260,7 @@ test("delete review can be canceled and permanent deletion preserves completed h
     .click();
   await page.getByRole("button", { name: "Save workout", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Work put in.", exact: true }),
+    page.getByRole("heading", { name: "Let’s train.", exact: true }),
   ).toBeVisible();
   const finished = await persisted(page);
   expect(finished.activeSession).toBeNull();

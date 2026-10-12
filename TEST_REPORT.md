@@ -1,5 +1,21 @@
 # Setwise validation report
 
+Setwise **1.4.1** verification: **October 12, 2026**.
+
+## Current results
+
+- TypeScript, ESLint, production build and whitespace checks pass.
+- **348 unit/integration tests pass in 19 files**.
+- **52 browser journeys pass**: 51 passed in the complete run; the new Settings inventory test had an incorrectly scoped nested locator, was corrected, and passed its targeted rerun. No application change was needed for that failure.
+- Six new journeys verify exclusive No equipment selection in onboarding/Settings, cleared and disabled alternatives, keyboard selection, saved/reloaded inventory and legacy mixed records staying unchanged until editing; 700 ms hover delay/cancellation/restart, immediate keyboard help and clicking an action beneath a passive tooltip; final-set return to exercise selection with skipped sets/rest/history preserved, and session save returning to Today with the next planned workout available.
+- Existing browser journeys continue to pass for saved data, backup/restore, offline reopening, equipment adaptation, nutrition, timer recovery, template deletion, onboarding and responsive/accessibility checks.
+- A separate Playwright CLI mobile screenshot verifies the visibly grayed inventory: `artifacts/screenshots/setwise-exclusive-inventory.png`. Explicit help remains interactive; passive hover explanations do not capture pointer clicks.
+- Capacitor iOS sync passes with the current web assets. Native Xcode/signing, physical iPhone/Safari/VoiceOver and camera testing remain unrun on this Windows machine.
+
+Evidence: `artifacts/setwise-1.4.1-final` and `artifacts/inventory-rerun`; local generated artifacts are excluded from GitHub source. The main chunk is approximately 2.02 MB / 373 KB gzipped; 30 files totaling approximately 3.05 MiB are precached. The build-size advisory is not a failure. The existing Pages base-path configuration remains unchanged; its 1.4.0 offline project-path smoke result is retained below.
+
+## Historical 1.4.0 verification
+
 Setwise **1.4.0** verification: **October 12, 2026**.
 
 ## Current results

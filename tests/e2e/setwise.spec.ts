@@ -212,3 +212,85 @@ test("checked controls keep visible contrast for every accent", async ({
     ).toBeGreaterThanOrEqual(44);
   }
 });
+
+test("hover help waits, cancels when moving away and leaves covered controls clickable", async ({
+  page,
+}) => {
+  await page.clock.install();
+  await quickOnboard(page);
+  const settings = page
+    .locator(".app-header")
+    .getByRole("button", { name: "Settings", exact: true });
+  const equipment = page.locator(".home-page").getByRole("button", {
+    name: "Training equipment: Commercial Gym",
+    exact: true,
+  });
+  await settings.hover();
+  await page.clock.fastForward(650);
+  await expect(page.getByRole("tooltip")).toHaveCount(0);
+  await page.mouse.move(4, 4);
+  await page.clock.fastForward(1000);
+  await expect(page.getByRole("tooltip")).toHaveCount(0);
+  await settings.hover();
+  await page.clock.fastForward(700);
+  const help = page.getByRole("tooltip");
+  await expect(help).toContainText("Change your preferences");
+  const box = await equipment.boundingBox();
+  expect(box).not.toBeNull();
+  // Deliberately place the passive tooltip over a real action to verify its hit behavior.
+  await help.evaluate((element, rect) => {
+    Object.assign(element.style, {
+      top: `${rect!.y}px`,
+      left: `${rect!.x}px`,
+      width: `${rect!.width}px`,
+      height: `${rect!.height + 20}px`,
+    });
+  }, box);
+  const point = { x: box!.x + box!.width / 2, y: box!.y + box!.height / 2 };
+  expect(
+    await page.evaluate(
+      ({ x, y }) =>
+        Boolean(document.elementFromPoint(x, y)?.closest(".training-location")),
+      point,
+    ),
+  ).toBe(true);
+  await page.mouse.click(point.x, point.y);
+  await expect(
+    page.getByRole("dialog", { name: "Where are you training?", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole("tooltip")).toHaveCount(0);
+});
+
+test("hovering another control restarts the delay and keyboard help remains immediate", async ({
+  page,
+}) => {
+  await page.clock.install();
+  await quickOnboard(page);
+  const header = page.locator(".app-header");
+  const settings = header.getByRole("button", {
+    name: "Settings",
+    exact: true,
+  });
+  const home = header.getByRole("button", {
+    name: "Setwise home",
+    exact: true,
+  });
+  await settings.hover();
+  await page.clock.fastForward(700);
+  await expect(page.getByRole("tooltip")).toContainText(
+    "Change your preferences",
+  );
+  await home.hover();
+  await expect(page.getByRole("tooltip")).toHaveCount(0);
+  await page.clock.fastForward(650);
+  await expect(page.getByRole("tooltip")).toHaveCount(0);
+  await page.clock.fastForward(50);
+  await expect(page.getByRole("tooltip")).toContainText("Returns to Home");
+  await page.keyboard.press("Escape");
+  await home.focus();
+  await page.keyboard.press("Tab");
+  await expect(settings).toBeFocused();
+  await expect(page.getByRole("tooltip")).toContainText(
+    "Change your preferences",
+  );
+});
