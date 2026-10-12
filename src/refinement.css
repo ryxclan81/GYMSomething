@@ -1,0 +1,1059 @@
+/* A day-first training interface: neutral surfaces and one restrained accent. */
+:root {
+  --bg: #090b0f;
+  --surface: #12151b;
+  --surface-2: #1b2029;
+  --text: #f1f4fa;
+  --muted: #a1adbf;
+  --accent: #a8c3ff;
+  --accent-ink: #111a2c;
+  --selected: #222e43;
+  --line: #29313e;
+  --line-strong: #596a83;
+  --radius: 12px;
+  color: var(--text);
+  background: var(--bg);
+}
+:root[data-accent="violet"] {
+  --accent: #c5b5ff;
+  --accent-ink: #20182f;
+  --selected: #302940;
+}
+:root[data-accent="neutral"] {
+  --accent: #dde3ec;
+  --accent-ink: #151922;
+  --selected: #2c323c;
+}
+body {
+  font-size: 15px;
+}
+p a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.field > label {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+h1 {
+  font-size: clamp(30px, 3vw, 38px);
+  font-weight: 600;
+  letter-spacing: -1px;
+}
+h2 {
+  font-size: 20px;
+  letter-spacing: -0.45px;
+}
+h3 {
+  font-size: 18px;
+  letter-spacing: -0.3px;
+}
+.page {
+  max-width: 1150px;
+  padding-top: 35px;
+}
+.page-header {
+  margin-bottom: 26px;
+  gap: 20px;
+}
+.page-header > div > .eyebrow {
+  display: none;
+}
+.page-header p.muted {
+  margin-top: 9px;
+  font-size: 14px;
+}
+.eyebrow {
+  text-transform: none;
+  letter-spacing: 0.2px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.section-heading {
+  margin: 0 0 18px;
+}
+.muted,
+.small,
+.fine-print {
+  color: var(--muted);
+}
+.fine-print {
+  font-size: 12px;
+  line-height: 1.65;
+}
+.btn {
+  border-radius: 10px;
+  font-size: 14px;
+  min-height: 46px;
+  box-shadow: none;
+}
+.btn.primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
+}
+.btn.secondary {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--line);
+}
+.btn.ghost {
+  background: transparent;
+}
+.text-btn {
+  min-height: 44px;
+  font-size: 13px;
+  color: var(--accent);
+  letter-spacing: 0;
+}
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+.forma-select {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--line-strong);
+  border-radius: 9px;
+  font-size: 16px;
+}
+.field > span,
+.field {
+  font-size: 13px;
+}
+.field > small {
+  font-size: 12px;
+}
+.forma-select-menu {
+  background: var(--surface-2);
+  border-color: var(--line-strong);
+  box-shadow: 0 14px 40px #0007;
+}
+.forma-select-option {
+  font-size: 14px;
+}
+.forma-select-option[data-highlighted],
+.forma-select-option[data-state="checked"] {
+  background: var(--selected);
+  color: var(--text);
+}
+.sidebar {
+  width: 210px;
+  background: var(--surface);
+  padding: 28px 18px;
+  border-color: var(--line);
+}
+.sidebar .brand {
+  margin: 0 10px 30px;
+}
+.sidebar nav {
+  gap: 6px;
+}
+.sidebar nav button {
+  min-height: 46px;
+  font-size: 14px;
+  border-radius: 10px;
+}
+.sidebar nav button.selected {
+  background: var(--selected);
+  color: var(--accent);
+}
+.sidebar-bottom > span,
+.sidebar-caption {
+  display: none;
+}
+.sidebar-bottom button {
+  width: 100%;
+  min-height: 46px;
+}
+.app-content {
+  margin-left: 210px;
+}
+.app-header {
+  padding-top: 15px;
+  padding-bottom: 15px;
+  min-height: 75px;
+  border-color: var(--line);
+}
+.desktop-location {
+  font-size: 13px;
+  color: var(--muted);
+}
+.header-controls .mobile-settings {
+  display: none;
+}
+.brand-dot {
+  color: var(--text);
+}
+.brand > svg {
+  color: var(--accent);
+}
+.equipment-switch {
+  background: transparent;
+  border-color: var(--line);
+  font-size: 13px;
+  min-height: 44px;
+}
+.bottom-nav {
+  background: var(--surface);
+  border-color: var(--line);
+}
+.bottom-nav button {
+  color: var(--muted);
+}
+.bottom-nav button.selected {
+  color: var(--accent);
+}
+.desktop-footer {
+  color: var(--muted);
+  font-size: 12px;
+}
+.sheet {
+  background: var(--surface);
+  border-color: var(--line-strong);
+  border-radius: 16px;
+}
+.sheet-inner {
+  padding: 25px;
+}
+.sheet-header h2 {
+  font-size: 21px;
+}
+.list-row {
+  border-color: var(--line);
+}
+.list-row strong {
+  font-size: 14px;
+}
+.list-row p,
+.list-row small {
+  font-size: 12px;
+}
+.segmented {
+  background: var(--surface);
+  padding: 4px;
+  border-radius: 11px;
+  gap: 5px;
+}
+.segmented button {
+  font-size: 14px;
+  min-height: 44px;
+  border-radius: 8px;
+}
+.segmented button.selected {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.chip {
+  font-size: 12px;
+  text-transform: none;
+  letter-spacing: 0;
+  border-radius: 8px;
+  background: var(--surface);
+  border-color: var(--line);
+}
+.chip.active,
+.chip.selected,
+.chip[aria-pressed="true"] {
+  background: var(--selected);
+  color: var(--accent);
+  border-color: var(--line-strong);
+}
+.empty {
+  padding: 28px 20px;
+  border-radius: 12px;
+  background: var(--surface);
+}
+.empty-mark {
+  display: none;
+}
+.empty h3 {
+  font-size: 18px;
+}
+.empty p {
+  font-size: 14px;
+}
+.home-date {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+.home-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(260px, 1fr);
+  gap: 36px;
+  align-items: start;
+}
+.home-main,
+.home-insights {
+  min-width: 0;
+}
+.home-day-picker {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 30px;
+}
+.home-day-picker .day-cell {
+  border: 1px solid transparent;
+  min-height: 85px;
+  padding: 11px 3px;
+  gap: 9px;
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--muted);
+}
+.home-day-picker .day-cell > span:first-child {
+  font-size: 12px;
+}
+.home-day-picker .day-cell > strong {
+  font-size: 18px;
+  font-weight: 550;
+}
+.home-day-picker .day-cell.selected {
+  color: var(--text);
+  background: var(--selected);
+  border-color: var(--line-strong);
+}
+.day-marker.planned {
+  background: var(--accent);
+}
+.day-marker.done {
+  color: var(--accent);
+}
+.daily-workouts .section-heading {
+  align-items: center;
+}
+.daily-empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+  padding: 24px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.daily-empty > svg {
+  color: var(--muted);
+}
+.daily-empty > div {
+  flex: 1;
+  min-width: 180px;
+}
+.daily-empty h3 {
+  font-size: 17px;
+}
+.daily-empty p {
+  margin-top: 7px;
+  font-size: 14px;
+}
+.daily-workout-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.daily-workout {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  text-align: left;
+}
+.daily-workout:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-2);
+}
+.daily-workout.is-active {
+  border-color: var(--accent);
+}
+.daily-workout.completed {
+  opacity: 0.8;
+}
+.daily-workout-icon {
+  display: grid;
+  place-items: center;
+  height: 46px;
+  width: 46px;
+  flex-shrink: 0;
+  background: var(--surface-2);
+  border-radius: 11px;
+  color: var(--accent);
+}
+.daily-workout-content {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 9px;
+}
+.daily-workout-top {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.daily-workout-top strong {
+  font-size: 19px;
+  font-weight: 550;
+  line-height: 1.35;
+}
+.daily-workout-top > span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.daily-workout-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 13px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.daily-workout-facts > span {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+}
+.daily-workout-muscles {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.daily-workout-action {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--accent);
+  font-size: 13px;
+}
+.home-actions {
+  margin-top: 14px;
+}
+.week-summary {
+  background: var(--surface);
+  padding: 25px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+}
+.week-summary-count {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 17px;
+}
+.week-summary-count strong {
+  font-size: 40px;
+  font-weight: 550;
+  letter-spacing: -1.5px;
+  line-height: 1;
+}
+.week-summary-count span {
+  font-size: 14px;
+  color: var(--muted);
+}
+.week-summary > progress {
+  width: 100%;
+  height: 7px;
+  border: 0;
+  border-radius: 4px;
+  margin: 0 0 10px;
+  background: var(--line);
+  accent-color: var(--accent);
+}
+progress::-webkit-progress-bar {
+  background: var(--line);
+  border-radius: 4px;
+}
+progress::-webkit-progress-value {
+  background: var(--accent);
+  border-radius: 4px;
+}
+.home-metrics {
+  display: flex;
+  gap: 35px;
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+.home-metrics > div {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.home-metrics strong {
+  font-size: 23px;
+  font-weight: 500;
+}
+.home-metrics span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.upcoming-workouts {
+  margin-top: 30px;
+}
+.upcoming-workout {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 18px 0;
+  text-align: left;
+}
+.upcoming-workout > span {
+  font-size: 12px;
+  color: var(--muted);
+  width: 105px;
+  flex-shrink: 0;
+}
+.upcoming-workout > strong {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+}
+.upcoming-workout > svg {
+  color: var(--muted);
+}
+.recent-home {
+  margin-top: 25px;
+  padding: 22px 0;
+  border-top: 1px solid var(--line);
+}
+.recent-home h2 {
+  font-size: 15px;
+  color: var(--muted);
+}
+.recent-home h3 {
+  margin-top: 14px;
+}
+.recent-home > p {
+  font-size: 13px;
+  margin-top: 7px;
+}
+.backup-reminder {
+  background: var(--surface);
+  border-color: var(--line);
+  margin-top: 20px;
+  border-radius: 12px;
+}
+.train-views {
+  margin-bottom: 26px;
+  max-width: 450px;
+  display: flex;
+}
+.train-views > button {
+  flex: 1;
+}
+.open-workout {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  border-top: 1px solid var(--line);
+  margin-top: 30px;
+  padding: 25px 0;
+}
+.open-workout h2 {
+  font-size: 17px;
+}
+.open-workout p {
+  font-size: 13px;
+  margin-top: 7px;
+}
+.workout-library > .field {
+  max-width: 500px;
+  margin-bottom: 24px;
+}
+.template-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.template-card {
+  padding: 23px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 13px;
+}
+.template-card-heading {
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.template-card-heading h3 {
+  margin: 0 0 8px;
+}
+.template-card-heading span {
+  font-size: 12px;
+}
+.template-description {
+  font-size: 13px;
+  margin: 14px 0;
+}
+.template-exercises > summary {
+  min-height: 44px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+}
+.template-exercises .template-movements {
+  margin-top: 8px;
+}
+.template-card .btn {
+  margin-top: 15px;
+}
+.library-list .list-row {
+  padding-top: 18px;
+  padding-bottom: 18px;
+}
+.library-list .list-row small {
+  font-size: 12px;
+}
+.filter-panel {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 20px;
+}
+.program-row {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 18px;
+}
+.program-row h2 {
+  font-size: 22px;
+}
+.program-row p.muted {
+  font-size: 13px;
+}
+.program-row .row {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.program-row .row .btn {
+  margin: 0;
+}
+.program-preview {
+  max-height: 350px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.program-preview table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  text-align: left;
+}
+.program-preview th,
+.program-preview td {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.program-preview th {
+  position: sticky;
+  top: 0;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-weight: 500;
+}
+.program-preview .list-row {
+  padding: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.program-preview:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.program-preview .list-row > span {
+  max-width: 55%;
+  font-size: 13px;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.phase-editor {
+  border: 1px solid var(--line);
+  min-width: 0;
+}
+.phase-editor legend {
+  font-size: 13px;
+  padding: 0 8px;
+  color: var(--muted);
+}
+.milestone-details > summary {
+  cursor: pointer;
+  min-height: 48px;
+}
+.milestone-details > summary::after {
+  content: "+";
+  color: var(--accent);
+  margin-left: auto;
+}
+.milestone-details[open] > summary::after {
+  content: "−";
+}
+.progress-hero {
+  padding: 22px;
+  border-radius: 13px;
+  background: var(--surface);
+}
+.progress-hero .hero-number {
+  font-size: 42px;
+  margin-top: 10px;
+}
+.progress-hero > svg {
+  display: none;
+}
+.template-number {
+  display: none;
+}
+.nutrition-calorie-progress {
+  width: 100%;
+  height: 7px;
+  margin-top: 16px;
+}
+.program-phase {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 18px;
+  background: var(--surface);
+}
+.program-phase .field {
+  font-size: 12px;
+}
+.goal-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  padding: 23px;
+}
+.goal-timeline {
+  background: var(--surface-2);
+  padding: 20px;
+  border-radius: 12px;
+}
+.goal-timeline .hero-number {
+  font-size: 30px;
+}
+.settings-profile-summary {
+  background: var(--surface);
+  border-color: var(--line);
+  border-radius: 13px;
+  padding: 22px;
+}
+.settings-tools-intro {
+  font-size: 13px;
+}
+.settings-navigation .list-row {
+  padding-top: 19px;
+  padding-bottom: 19px;
+}
+.settings-tools .list-row {
+  padding-top: 17px;
+  padding-bottom: 17px;
+}
+.settings-appearance {
+  max-width: 580px;
+}
+.setup-footer {
+  background: var(--surface);
+}
+.setup-progress {
+  margin-bottom: 22px;
+}
+.setup-progress > span.complete {
+  background: var(--accent);
+}
+.setup-intro .eyebrow {
+  font-size: 12px;
+  letter-spacing: 0;
+}
+.setup-intro h1 {
+  font-size: 29px;
+  letter-spacing: -0.7px;
+}
+.setup-intro > p.muted {
+  font-size: 14px;
+}
+.setup-group {
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+.setup-week > button.selected,
+.setup-environment.selected {
+  background: var(--selected);
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+.setup-environment strong {
+  font-size: 15px;
+}
+.setup-environment small,
+.setup-tool small {
+  font-size: 12px;
+}
+.setup-nutrition-intro {
+  background: var(--surface-2);
+  border-color: var(--line);
+}
+.nutrition-enable-icon,
+.nutrition-collection {
+  background: var(--surface-2);
+}
+.nutrition-page .eyebrow {
+  font-size: 12px;
+  letter-spacing: 0;
+}
+.nutrition-page .metric {
+  font-size: 27px;
+}
+.nutrition-ring-fill {
+  stroke: var(--accent);
+}
+.nutrition-ring-track {
+  stroke: var(--line);
+}
+.nutrition-macro-grid progress,
+.nutrition-trend-chart > button > i {
+  accent-color: var(--accent);
+  background: var(--line-strong);
+}
+.nutrition-trend-chart > button.selected > i {
+  background: var(--accent);
+}
+.workout-overview-card {
+  background: var(--surface);
+  border-color: var(--line);
+  border-radius: 13px;
+}
+.workout-overview-card:hover {
+  background: var(--surface-2);
+  border-color: var(--line-strong);
+}
+.workout-overview-card .eyebrow {
+  text-transform: none;
+  letter-spacing: 0.1px;
+}
+.workout-overview-card h2,
+.workout-overview-card h3 {
+  font-size: 21px;
+}
+.workout-overview-card .muscle-label {
+  color: var(--muted);
+}
+.focus-topbar,
+.focus-footer {
+  background: var(--surface);
+  border-color: var(--line);
+}
+.focus-targets {
+  background: transparent;
+}
+.focus-heading h1 {
+  font-size: 31px;
+}
+.set-row.next-set input {
+  background: var(--selected);
+  border-color: var(--accent);
+}
+.set-row.complete input {
+  background: var(--surface-2);
+}
+.rest-dock {
+  background: var(--surface-2);
+  border-color: var(--line-strong);
+  border-radius: 12px;
+}
+.focus-next {
+  background: var(--selected);
+  color: var(--text);
+  border-color: var(--line-strong);
+}
+.toast {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--line-strong);
+  border-radius: 10px;
+  box-shadow: 0 8px 25px #0006;
+}
+:root[data-density="compact"] .daily-workout {
+  padding: 16px;
+  gap: 12px;
+}
+:root[data-density="compact"] .template-card,
+:root[data-density="compact"] .program-row {
+  padding: 18px;
+}
+:root[data-density="compact"] .list-row {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+:root[data-density="compact"] .page-header {
+  margin-bottom: 20px;
+}
+@media (max-width: 1050px) {
+  .home-layout {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .home-insights {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+  .home-insights > .recent-home {
+    margin: 0;
+  }
+}
+@media (max-width: 800px) {
+  .app-content {
+    margin-left: 0;
+  }
+  .page {
+    padding: 26px 20px 38px;
+  }
+  .page-header {
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .page-header > .btn {
+    min-height: 44px;
+  }
+  .header-controls .mobile-settings {
+    display: inline-flex;
+  }
+  .app-header {
+    padding: calc(10px + env(safe-area-inset-top)) 20px 10px;
+    min-height: 68px;
+  }
+  .home-insights {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+  .home-date {
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .home-page h1 {
+    font-size: 29px;
+    letter-spacing: -0.8px;
+  }
+  .home-day-picker {
+    margin-bottom: 26px;
+    gap: 4px;
+  }
+  .home-day-picker .day-cell {
+    min-height: 77px;
+    padding: 10px 1px;
+    gap: 8px;
+  }
+  .home-day-picker .day-cell > span:first-child {
+    font-size: 11px;
+  }
+  .home-day-picker .day-cell > strong {
+    font-size: 17px;
+  }
+  .daily-workout {
+    padding: 20px 16px;
+    gap: 12px;
+  }
+  .daily-workout-icon {
+    display: none;
+  }
+  .daily-workout-top strong {
+    font-size: 19px;
+  }
+  .daily-workout-action {
+    flex-direction: column;
+    font-size: 12px;
+    gap: 5px;
+  }
+  .daily-empty {
+    padding: 22px;
+  }
+  .daily-empty > .btn {
+    width: 100%;
+  }
+  .daily-empty > svg {
+    display: none;
+  }
+  .daily-workouts h2,
+  .upcoming-workouts h2 {
+    font-size: 19px;
+  }
+  .home-actions .text-btn {
+    font-size: 13px;
+  }
+  .week-summary {
+    padding: 23px;
+  }
+  .upcoming-workout > span {
+    width: 89px;
+  }
+  .template-grid {
+    grid-template-columns: 1fr;
+  }
+  .train-views {
+    max-width: none;
+    width: 100%;
+  }
+  .template-card {
+    padding: 22px;
+  }
+  .program-row {
+    padding: 22px;
+  }
+  .open-workout {
+    align-items: flex-start;
+  }
+  .open-workout .btn {
+    flex-shrink: 0;
+  }
+  .sheet-inner {
+    padding: 24px 20px;
+  }
+  .focus-heading h1 {
+    font-size: 29px;
+  }
+  .nutrition-energy .hero-number {
+    font-size: 43px;
+  }
+  .nutrition-energy > .nutrition-energy-ring {
+    width: 125px;
+    height: 125px;
+  }
+}
+@media (max-width: 360px) {
+  .page {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .home-day-picker .day-cell > span:first-child {
+    font-size: 10px;
+  }
+  .daily-workout {
+    padding: 17px 14px;
+  }
+  .daily-workout-top strong {
+    font-size: 18px;
+  }
+  .nutrition-macro-grid {
+    gap: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .daily-workout,
+  .day-cell,
+  .btn {
+    transition: none;
+  }
+}

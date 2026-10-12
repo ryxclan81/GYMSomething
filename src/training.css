@@ -1,0 +1,1244 @@
+.library-page .toolbar {
+  flex-wrap: nowrap;
+  margin: 26px 0 15px;
+}
+.library-page .search-input {
+  flex: 1;
+  min-width: 0;
+  display: block;
+}
+.library-page .search-input > input {
+  height: 49px;
+  padding-right: 43px;
+  font-size: 13px;
+}
+.library-page .search-input > .icon-button {
+  position: absolute;
+  right: 2px;
+  top: 3px;
+  width: 40px;
+  min-width: 40px;
+}
+.library-page .toolbar > .btn {
+  width: 49px;
+  padding: 13px;
+  flex-shrink: 0;
+}
+.library-page .chip.active,
+.plan-page .chip.active,
+.progress-page .chip.active,
+.sheet .chip.active {
+  background: var(--selected);
+  border-color: var(--line-strong);
+  color: var(--accent);
+}
+.library-page .chip-row {
+  gap: 7px;
+}
+.library-page .section-heading {
+  font-size: 12px;
+}
+.library-page .exercise-list {
+  border-top: 1px solid var(--line);
+}
+.library-page .exercise-row {
+  gap: 7px;
+  padding: 7px 0;
+  min-height: 84px;
+}
+.library-page .exercise-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-height: 66px;
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  padding: 8px 0;
+  text-align: left;
+  color: var(--text);
+}
+.library-page .exercise-info > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.library-page .exercise-info > svg {
+  color: var(--muted);
+}
+.library-page .exercise-info strong {
+  font-size: 14px;
+  font-weight: 550;
+  line-height: 1.5;
+  display: block;
+}
+.library-page .exercise-info small {
+  display: block;
+  margin-top: 5px;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.library-page .exercise-info .equipment-note {
+  font-size: 10px;
+  color: #cfb48a;
+}
+.library-page .exercise-info .exercise-glyph {
+  width: 45px;
+  height: 45px;
+}
+.library-page .section.surface {
+  margin-top: 16px;
+}
+.library-page .surface .field {
+  margin-bottom: 4px;
+}
+.library-page .page-header .btn.ghost {
+  padding-left: 0;
+  justify-content: flex-start;
+}
+.library-page .page-header > div > .btn.ghost {
+  margin-bottom: 17px;
+  min-height: 32px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.exercise-detail-hero > .eyebrow {
+  margin-bottom: 12px;
+  color: var(--accent);
+  font-size: 9px;
+}
+.exercise-detail-hero > h2 {
+  font-size: 27px;
+}
+.exercise-detail-hero > p {
+  font-size: 13px;
+}
+.exercise-detail-hero > .row {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+.exercise-detail-hero .btn {
+  font-size: 12px;
+  padding: 12px 15px;
+}
+.sheet .stack > .grid-2 > .metric {
+  padding: 15px 0;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sheet .metric > span {
+  font-size: 11px;
+}
+.sheet .metric > strong {
+  font-size: 25px;
+}
+.sheet .metric > strong small {
+  display: inline;
+  font-size: 11px;
+}
+.sheet .instruction-list {
+  padding-left: 20px;
+}
+.sheet .stack > .section > h3 {
+  margin-bottom: 18px;
+}
+.sheet .fine-print a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.sheet .surface .row {
+  justify-content: space-between;
+  font-size: 12px;
+}
+.sheet .surface .row > span:last-child {
+  text-align: right;
+  max-width: 58%;
+}
+.plan-page .segmented-control button.active,
+.progress-page .segmented-control button.active {
+  background: var(--line);
+  color: var(--text);
+}
+.plan-page .week-navigation > div {
+  text-align: center;
+}
+.plan-page .week-navigation small {
+  display: block;
+  font-size: 11px;
+  margin-top: 7px;
+}
+.plan-page .week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 7px;
+  padding: 5px 0 24px;
+}
+.plan-page .calendar-day {
+  min-height: 89px;
+  padding: 13px 3px;
+  gap: 10px;
+}
+.plan-page .calendar-day.today {
+  background: var(--selected);
+}
+.plan-page .calendar-dot {
+  background: transparent;
+}
+.plan-page .calendar-dot.planned {
+  background: var(--muted);
+}
+.plan-page .calendar-dot.complete {
+  background: var(--accent);
+}
+.plan-page .planner-day:first-child {
+  border-top: 1px solid var(--line);
+}
+.plan-page .scheduled-workout {
+  flex-wrap: nowrap;
+  padding: 16px;
+}
+.plan-page .scheduled-workout.rest {
+  background: transparent;
+  border: 1px dashed var(--line);
+}
+.plan-page .scheduled-workout.skipped {
+  opacity: 0.66;
+}
+.plan-page .schedule-main {
+  padding: 0;
+  gap: 7px;
+}
+.plan-page .schedule-main > .eyebrow {
+  font-size: 8px;
+  letter-spacing: 1.4px;
+}
+.plan-page .scheduled-workout.completed .eyebrow {
+  color: var(--accent);
+}
+.plan-page .unscheduled-day {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+  width: 100%;
+  background: none;
+  border: 0;
+  color: var(--muted);
+}
+.plan-page .add-day-action {
+  margin-top: 8px;
+  min-height: 38px;
+  padding: 8px 10px;
+  font-size: 10px;
+  border-color: var(--line);
+}
+.plan-page .editorial-note {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-top: 30px;
+  font-size: 12px;
+}
+.plan-page .template-row {
+  align-items: flex-start;
+  padding: 30px 0;
+  gap: 24px;
+}
+.plan-page .template-number {
+  margin-top: 3px;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+.plan-page .template-info > .eyebrow {
+  font-size: 9px;
+}
+.plan-page .template-info > .text-button {
+  display: block;
+  padding: 11px 0 2px;
+  color: var(--text);
+  min-height: 42px;
+}
+.plan-page .template-info h3 {
+  font-size: 24px;
+  line-height: 1.2;
+  margin: 0;
+}
+.plan-page .template-info > p {
+  font-size: 12px;
+  margin: 8px 0;
+}
+.plan-page .template-info > small {
+  font-size: 11px;
+  line-height: 1.7;
+  display: block;
+  max-width: 590px;
+}
+.plan-page .template-info .btn {
+  font-size: 11px;
+  min-height: 40px;
+  padding: 10px 14px;
+}
+.plan-page .template-row .icon-button {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+}
+.plan-page .program-row {
+  display: block;
+  padding: 30px 0;
+}
+.plan-page .program-row .section-heading {
+  margin: 0 0 13px;
+}
+.plan-page .program-row > h2 {
+  font-size: 27px;
+  margin-bottom: 12px;
+}
+.plan-page .program-row > p {
+  font-size: 13px;
+  margin-bottom: 19px;
+  max-width: 660px;
+}
+.plan-page .program-line {
+  justify-content: space-between;
+  margin: 22px 0 18px;
+  font-size: 12px;
+}
+.plan-page .program-line > span:first-child {
+  color: var(--text);
+}
+.plan-page .program-row > .chip-row {
+  margin-bottom: 18px;
+}
+.plan-page .program-row .chip {
+  font-size: 10px;
+  min-height: 30px;
+  padding: 6px 11px;
+}
+.plan-page .program-row > .row {
+  flex-wrap: wrap;
+}
+.prescription-editor.surface {
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  padding: 15px 17px;
+}
+.prescription-editor > .row {
+  justify-content: space-between;
+  gap: 8px;
+}
+.prescription-editor > .row > .text-button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  color: var(--text);
+  padding: 3px 0;
+  white-space: normal;
+}
+.prescription-editor > .row > .text-button > .eyebrow {
+  font-size: 8px;
+  color: var(--accent);
+}
+.prescription-editor > .row > .text-button > strong {
+  font-size: 14px;
+  line-height: 1.4;
+}
+.prescription-editor > .row > .text-button > small {
+  font-size: 10px;
+  line-height: 1.6;
+}
+.prescription-editor > .row > .row {
+  gap: 0;
+  flex-wrap: nowrap;
+}
+.prescription-editor .icon-button {
+  width: 31px;
+  min-width: 31px;
+  height: 40px;
+}
+.prescription-editor details {
+  padding-top: 15px;
+  border-top: 1px solid var(--line);
+}
+.prescription-editor summary {
+  font-size: 12px;
+  color: var(--accent);
+  cursor: pointer;
+}
+.prescription-editor .field {
+  margin-bottom: 4px;
+}
+.sheet .field {
+  font-size: 12px;
+  line-height: 1.55;
+}
+.sheet .row:has(> input[type="checkbox"]) {
+  justify-content: space-between;
+  gap: 18px;
+}
+.sheet .row:has(> input[type="checkbox"]) > span {
+  max-width: 85%;
+  font-size: 12px;
+}
+.sheet input[type="file"] {
+  font-size: 11px;
+  line-height: 1.6;
+  height: auto;
+  min-height: 48px;
+}
+.progress-page .progress-filter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-top: 26px;
+  margin-bottom: 25px;
+  font-size: 12px;
+}
+.progress-filter > .field {
+  margin: 0;
+  max-width: 230px;
+  flex: 1;
+}
+.progress-filter > .field .input {
+  font-size: 12px;
+  min-height: 42px;
+  padding: 10px 12px;
+  background: transparent;
+}
+.progress-page .progress-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 0 25px;
+  border-bottom: 1px solid var(--line);
+  gap: 18px;
+}
+.progress-hero .eyebrow {
+  font-size: 9px;
+  color: var(--muted);
+}
+.progress-hero .hero-number {
+  display: block;
+  font-size: 76px;
+  line-height: 1.3;
+  font-weight: 480;
+  letter-spacing: -3px;
+  margin-top: 8px;
+}
+.progress-hero .hero-number > span {
+  font-size: 15px;
+  letter-spacing: 0;
+  font-weight: 400;
+  margin-left: 6px;
+}
+.progress-hero p {
+  font-size: 11px;
+  margin-top: 3px;
+}
+.progress-page .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 25px;
+  padding: 28px 0;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 35px;
+}
+.progress-page .stats-grid > .metric {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.progress-page .stats-grid .metric > span {
+  font-size: 11px;
+}
+.progress-page .stats-grid .metric > strong {
+  font-size: 32px;
+  font-weight: 500;
+}
+.progress-page .stats-grid .metric > strong small {
+  font-size: 11px;
+  display: inline;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.progress-page > .section {
+  margin-top: 35px;
+}
+.progress-page .section-heading > .input,
+.progress-page .section-heading .input {
+  max-width: 190px;
+  font-size: 11px;
+  min-height: 38px;
+  padding: 8px 9px;
+  background: transparent;
+}
+.progress-page .section-heading .btn.ghost {
+  font-size: 10px;
+  min-height: 36px;
+  padding: 7px 0;
+}
+.trend-chart {
+  margin: 24px 0 12px;
+  color: var(--muted);
+}
+.trend-chart .chart-value {
+  margin-bottom: 20px;
+  color: var(--text);
+}
+.chart-value > strong {
+  font-weight: 500;
+  font-size: 27px;
+  letter-spacing: -0.7px;
+}
+.chart-value > span {
+  font-size: 11px;
+}
+.chart-value > small {
+  display: block;
+  font-size: 10px;
+  margin-top: 8px;
+}
+.trend-chart > svg {
+  display: block;
+  max-height: 245px;
+}
+.chart-empty {
+  height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  text-align: center;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+}
+.chart-empty > p {
+  font-size: 12px;
+  max-width: 260px;
+}
+.chart-data {
+  margin-top: 15px;
+}
+.chart-data > summary {
+  font-size: 10px;
+  color: var(--muted);
+  cursor: pointer;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+}
+.chart-data table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 15px 0;
+  font-size: 11px;
+  text-align: left;
+}
+.chart-data th,
+.chart-data td {
+  padding: 12px 4px;
+  border-bottom: 1px solid var(--line);
+}
+.chart-data th:last-child,
+.chart-data td:last-child {
+  text-align: right;
+}
+.volume-legend {
+  display: flex;
+  gap: 20px;
+  font-size: 10px;
+  color: var(--muted);
+  margin: 15px 0 27px;
+}
+.volume-legend > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.direct-dot,
+.indirect-dot {
+  width: 6px;
+  height: 6px;
+  display: inline-block;
+  border-radius: 2px;
+  background: var(--accent);
+}
+.indirect-dot {
+  background: var(--line-strong);
+}
+.muscle-volume-row {
+  margin: 22px 0;
+}
+.muscle-volume-row > .row {
+  justify-content: space-between;
+  font-size: 12px;
+  gap: 10px;
+}
+.muscle-volume-row > .row > strong {
+  font-weight: 500;
+  text-transform: capitalize;
+}
+.muscle-volume-row > .row > .muted {
+  font-size: 10px;
+  text-align: right;
+}
+.volume-track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--selected);
+  margin: 12px 0 7px;
+  overflow: hidden;
+  display: flex;
+}
+.volume-direct {
+  background: var(--accent);
+}
+.volume-indirect {
+  background: var(--line-strong);
+}
+.muscle-volume-row > small {
+  font-size: 9px;
+}
+.goal-row {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 23px 0;
+  color: var(--text);
+}
+.goal-row .row {
+  justify-content: space-between;
+  font-size: 12px;
+}
+.goal-row > .row:first-child {
+  margin-bottom: 14px;
+}
+.goal-row > .row > strong {
+  font-weight: 550;
+  font-size: 15px;
+}
+.goal-row > small {
+  font-size: 10px;
+}
+.goal-row .goal-track {
+  margin-top: 15px;
+}
+.goal-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 24px 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  color: var(--muted);
+  font-size: 12px;
+}
+.goal-empty > svg:first-child {
+  color: var(--accent);
+}
+.goal-empty > span {
+  flex: 1;
+}
+.streak-banner {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  padding: 23px 0;
+  border-top: 1px solid var(--line);
+}
+.streak-banner > svg {
+  color: var(--accent);
+}
+.streak-banner strong {
+  font-size: 17px;
+  font-weight: 500;
+}
+.streak-banner p {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 7px;
+  max-width: 490px;
+}
+.consistency-grid {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 13px;
+}
+.consistency-week {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.consistency-week > strong {
+  font-size: 15px;
+  font-weight: 500;
+  background: var(--surface-2);
+  color: var(--muted);
+  width: 100%;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+.consistency-week.met > strong {
+  background: var(--selected);
+  color: var(--accent);
+}
+.consistency-week > small {
+  font-size: 9px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.achievement-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 17px 0;
+  border-bottom: 1px solid var(--line);
+}
+.achievement-icon {
+  width: 39px;
+  height: 39px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--selected);
+  border-radius: 50%;
+  color: var(--muted);
+}
+.achievement-row.unlocked .achievement-icon {
+  background: var(--selected);
+  color: var(--accent);
+}
+.achievement-row > div {
+  flex: 1;
+  min-width: 0;
+}
+.achievement-row strong {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  display: block;
+}
+.achievement-row small {
+  display: block;
+  font-size: 10px;
+  margin-top: 5px;
+  line-height: 1.6;
+}
+.achievement-row > .muted {
+  font-size: 9px;
+}
+.progress-page .history-row {
+  gap: 20px;
+  padding: 24px 0;
+}
+.history-row > div:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.history-row > div > h3 {
+  font-size: 17px;
+  margin-bottom: 8px;
+}
+.history-row > div > p {
+  font-size: 11px;
+  line-height: 1.6;
+}
+.history-row > div > small {
+  font-size: 10px;
+  display: block;
+  margin-top: 7px;
+  overflow-wrap: anywhere;
+}
+.history-date {
+  width: 39px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.history-date > strong {
+  font-size: 27px;
+  display: block;
+  font-weight: 450;
+  letter-spacing: -0.5px;
+}
+.history-date > .eyebrow {
+  display: block;
+  font-size: 8px;
+  margin-top: 7px;
+}
+.history-row > svg {
+  color: var(--muted);
+}
+.record-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid var(--line);
+  padding: 22px 0;
+}
+.record-row > div {
+  min-width: 0;
+  flex: 1;
+}
+.record-row > div > strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.record-row > div > small {
+  display: block;
+  font-size: 10px;
+  margin-top: 6px;
+}
+.record-row > strong {
+  font-size: 25px;
+  font-weight: 450;
+  letter-spacing: -0.5px;
+  white-space: nowrap;
+  color: var(--text);
+}
+.record-row > strong > small {
+  font-size: 10px;
+  letter-spacing: 0;
+}
+.goal-detail-number > .eyebrow {
+  display: block;
+  font-size: 9px;
+}
+.goal-detail-number > strong {
+  display: block;
+  font-size: 45px;
+  font-weight: 450;
+  letter-spacing: -1px;
+  margin-top: 14px;
+}
+.goal-detail-number > strong > small {
+  font-size: 15px;
+  letter-spacing: 0;
+}
+.goal-detail-number > p {
+  font-size: 12px;
+  margin-top: 12px;
+}
+.milestone-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--line);
+}
+.milestone-strip > div {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 11px;
+}
+.milestone-strip > div > svg {
+  width: 33px;
+  height: 33px;
+  padding: 8px;
+  background: var(--selected);
+  border-radius: 50%;
+}
+.milestone-strip > div.reached {
+  color: var(--accent);
+}
+.milestone-strip > div.reached > svg {
+  background: var(--selected);
+}
+.suggestion .suggestion-change {
+  margin: 17px 0;
+}
+.suggestion > .row:first-child {
+  margin: 0 0 12px;
+}
+.suggestion > .row:first-child > .eyebrow {
+  font-size: 8px;
+  color: var(--accent);
+}
+.suggestion > .row:first-child > .fine-print {
+  font-size: 10px;
+}
+.suggestion .row > .btn {
+  min-height: 41px;
+  font-size: 11px;
+  padding: 10px 14px;
+}
+.suggestion > h3 {
+  font-size: 22px;
+}
+@media (min-width: 1200px) {
+  .library-page .exercise-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 35px;
+  }
+  .library-page .exercise-info strong {
+    font-size: 13px;
+  }
+  .progress-page {
+    max-width: 1020px;
+  }
+  .progress-page .trend-chart > svg {
+    max-height: 245px;
+  }
+}
+@media (max-width: 600px) {
+  .library-page .toolbar {
+    margin-top: 19px;
+    gap: 8px;
+  }
+  .library-page .search-input > input {
+    font-size: 11px;
+    padding-left: 38px;
+    height: 47px;
+  }
+  .library-page .search-input > svg {
+    left: 12px;
+    top: 16px;
+    width: 16px;
+  }
+  .library-page .search-input > .icon-button {
+    width: 32px;
+    min-width: 32px;
+  }
+  .library-page .toolbar > .btn {
+    width: 44px;
+    min-height: 47px;
+    padding: 11px;
+  }
+  .library-page .chip-row {
+    gap: 6px;
+    row-gap: 7px;
+  }
+  .library-page .chip {
+    font-size: 10px;
+    padding: 7px 10px;
+    min-height: 34px;
+  }
+  .library-page .exercise-info {
+    gap: 11px;
+  }
+  .library-page .exercise-info strong {
+    font-size: 13px;
+  }
+  .library-page .exercise-info small {
+    font-size: 10px;
+    line-height: 1.6;
+  }
+  .library-page .exercise-info .exercise-glyph {
+    width: 39px;
+    height: 39px;
+    border-radius: 8px;
+  }
+  .library-page .exercise-info > .exercise-glyph > svg {
+    width: 17px;
+  }
+  .library-page .exercise-row > .icon-button {
+    width: 35px;
+    min-width: 35px;
+  }
+  .library-page .section-heading {
+    gap: 8px;
+  }
+  .library-page .section-heading > .eyebrow {
+    font-size: 8px;
+  }
+  .library-page .section-heading > .muted {
+    font-size: 10px;
+  }
+  .library-page .page-header > .btn span,
+  .plan-page .page-header > .btn span,
+  .progress-page .page-header > .btn span {
+    display: none;
+  }
+  .library-page .page-header > .btn,
+  .plan-page .page-header > .btn,
+  .progress-page .page-header > .btn {
+    width: 43px;
+    padding: 10px;
+  }
+  .plan-page .week-strip {
+    gap: 3px;
+    padding-top: 0;
+    padding-bottom: 17px;
+  }
+  .plan-page .calendar-day {
+    min-height: 83px;
+    padding: 12px 1px;
+    gap: 9px;
+  }
+  .plan-page .calendar-day small {
+    font-size: 9px;
+  }
+  .plan-page .calendar-day strong {
+    font-size: 19px;
+  }
+  .plan-page .week-navigation > div > strong {
+    font-size: 13px;
+  }
+  .plan-page .week-navigation > div > small {
+    font-size: 9px;
+  }
+  .plan-page .planner-day-label {
+    width: 34px;
+  }
+  .plan-page .planner-day-label > .eyebrow {
+    font-size: 8px;
+  }
+  .plan-page .planner-day-label > strong {
+    font-size: 20px;
+    font-weight: 450;
+  }
+  .plan-page .scheduled-workout {
+    gap: 1px;
+    flex-wrap: nowrap;
+    padding: 13px 10px;
+  }
+  .plan-page .scheduled-workout > .icon-button {
+    width: 31px;
+    min-width: 31px;
+  }
+  .plan-page .schedule-main > .eyebrow {
+    font-size: 7px;
+    letter-spacing: 1.1px;
+  }
+  .plan-page .schedule-main > strong {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .plan-page .schedule-main > small {
+    font-size: 9px;
+    line-height: 1.6;
+  }
+  .plan-page .editorial-note {
+    font-size: 11px;
+    gap: 11px;
+    margin-top: 26px;
+  }
+  .plan-page .template-row {
+    gap: 13px;
+    padding: 26px 0;
+  }
+  .plan-page .template-number {
+    font-size: 9px;
+    min-width: 21px;
+  }
+  .plan-page .template-info h3 {
+    font-size: 22px;
+  }
+  .plan-page .template-info > .eyebrow {
+    font-size: 8px;
+  }
+  .plan-page .template-info > p {
+    font-size: 11px;
+  }
+  .plan-page .template-info > small {
+    font-size: 10px;
+  }
+  .plan-page .program-row > h2 {
+    font-size: 24px;
+  }
+  .plan-page .program-row > p {
+    font-size: 12px;
+  }
+  .plan-page .program-line {
+    font-size: 10px;
+  }
+  .plan-page .segmented-control button,
+  .progress-page .segmented-control button {
+    font-size: 11px;
+    padding: 10px 8px;
+  }
+  .prescription-editor.surface {
+    padding: 14px 12px;
+  }
+  .prescription-editor > .row > .text-button > strong {
+    font-size: 13px;
+  }
+  .prescription-editor > .row > .text-button > small {
+    font-size: 9px;
+  }
+  .prescription-editor .icon-button {
+    width: 28px;
+    min-width: 28px;
+  }
+  .progress-page .progress-filter {
+    font-size: 10px;
+    margin: 22px 0 18px;
+  }
+  .progress-filter > .field {
+    max-width: 178px;
+  }
+  .progress-filter > .field .input {
+    font-size: 11px;
+  }
+  .progress-hero .hero-number {
+    font-size: 68px;
+  }
+  .progress-hero .hero-number > span {
+    font-size: 13px;
+  }
+  .progress-hero p {
+    font-size: 10px;
+  }
+  .progress-page .stats-grid {
+    gap: 14px;
+    padding: 24px 0;
+    margin-bottom: 28px;
+  }
+  .progress-page .stats-grid .metric > span {
+    font-size: 9px;
+  }
+  .progress-page .stats-grid .metric > strong {
+    font-size: 27px;
+  }
+  .progress-page .stats-grid .metric > strong small {
+    font-size: 9px;
+  }
+  .progress-page .section-heading {
+    gap: 10px;
+  }
+  .progress-page .section-heading > .eyebrow {
+    font-size: 8px;
+    letter-spacing: 1px;
+  }
+  .progress-page .section-heading .input {
+    max-width: 140px;
+    font-size: 9px;
+  }
+  .progress-page .section-heading .btn.ghost {
+    font-size: 9px;
+    gap: 4px;
+  }
+  .chart-value > strong {
+    font-size: 25px;
+  }
+  .chart-value > span {
+    font-size: 9px;
+  }
+  .volume-legend {
+    gap: 15px;
+    font-size: 9px;
+    margin-bottom: 23px;
+  }
+  .muscle-volume-row > .row {
+    font-size: 11px;
+  }
+  .muscle-volume-row > .row > .muted {
+    font-size: 9px;
+  }
+  .progress-page .fine-print {
+    font-size: 10px;
+    line-height: 1.7;
+  }
+  .streak-banner strong {
+    font-size: 15px;
+  }
+  .streak-banner p {
+    font-size: 10px;
+  }
+  .consistency-grid {
+    gap: 4px;
+  }
+  .consistency-week > strong {
+    font-size: 13px;
+    height: 42px;
+  }
+  .consistency-week > small {
+    font-size: 7px;
+  }
+  .achievement-row {
+    gap: 12px;
+  }
+  .achievement-row strong {
+    font-size: 12px;
+  }
+  .achievement-row small {
+    font-size: 9px;
+  }
+  .achievement-icon {
+    width: 34px;
+    height: 34px;
+  }
+  .achievement-icon > svg {
+    width: 17px;
+  }
+  .goal-row > .row > strong {
+    font-size: 14px;
+  }
+  .goal-row > .row {
+    font-size: 10px;
+  }
+  .goal-empty {
+    font-size: 11px;
+  }
+  .progress-page .history-row {
+    gap: 15px;
+    padding: 23px 0;
+  }
+  .history-row > div > h3 {
+    font-size: 15px;
+  }
+  .history-row > div > p {
+    font-size: 10px;
+  }
+  .history-date {
+    width: 30px;
+  }
+  .history-date > strong {
+    font-size: 25px;
+  }
+  .record-row {
+    gap: 12px;
+    padding: 20px 0;
+  }
+  .record-row > div > strong {
+    font-size: 12px;
+  }
+  .record-row > strong {
+    font-size: 22px;
+  }
+  .record-row > strong > small {
+    font-size: 9px;
+  }
+  .progress-page .list-row.btn.ghost {
+    padding: 18px 0;
+    white-space: normal;
+  }
+  .progress-page .list-row.btn.ghost > .chip {
+    font-size: 9px;
+    padding: 6px 8px;
+    min-height: 29px;
+  }
+  .progress-page .list-row.btn.ghost strong {
+    font-size: 12px;
+  }
+  .progress-page .list-row.btn.ghost small {
+    font-size: 9px;
+  }
+}

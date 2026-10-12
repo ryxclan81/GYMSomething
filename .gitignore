@@ -1,0 +1,17 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+.env
+.env.local
+*.tsbuildinfo
+ios/App/Pods/
+ios/App/build/
+ios/App/App/public/
+artifacts/
+releases/
+.codex/
+.agents/
+__pycache__/
+.DS_Store
+ios/App/App.xcodeproj/xcuserdata/
