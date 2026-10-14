@@ -38,7 +38,9 @@ test("onboarding puts No equipment first, clears equipment, and saves an exclusi
   await first.check();
   await setup.getByRole("button", { name: "Continue", exact: true }).click();
   await setup.getByRole("button", { name: "Continue", exact: true }).click();
-  await formControl(setup, "Create an editable starter plan").uncheck();
+  await expect(
+    setup.getByRole("button", { name: /^Start empty/ }),
+  ).toHaveAttribute("aria-pressed", "true");
   await setup
     .getByRole("button", { name: "Let’s get started", exact: true })
     .click();

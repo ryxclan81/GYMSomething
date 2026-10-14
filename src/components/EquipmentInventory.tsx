@@ -1,4 +1,6 @@
-import { useId } from "react";
+import { useId, useState } from "react";
+import { Search } from "lucide-react";
+import { filterEquipment } from "../domain/equipmentSearch";
 import {
   changeEquipmentSelection,
   equipmentChoices,
@@ -19,10 +21,57 @@ export default function EquipmentInventory({
   const selected = normalizeEquipmentSelection(items);
   const equipmentFree = selected.includes(NO_EQUIPMENT);
   const explanationId = useId();
+  const searchId = useId();
+  const [query, setQuery] = useState("");
+  const choices = equipmentChoices([...options, ...items]);
+  const shown = filterEquipment(choices, query);
+  const selectable = shown.filter((item) => item !== NO_EQUIPMENT);
   return (
     <div className="equipment-inventory-container">
+      <label className="equipment-search" htmlFor={searchId}>
+        <span>Search equipment</span>
+        <div className="equipment-search-control">
+          <Search size={18} aria-hidden="true" />
+          <input
+            id={searchId}
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Equipment name"
+            autoComplete="off"
+          />
+        </div>
+      </label>
+      <div className="equipment-selection-actions">
+        <button
+          type="button"
+          className="btn secondary"
+          disabled={!selectable.length}
+          onClick={() =>
+            onChange([
+              ...new Set([
+                ...selected.filter((item) => item !== NO_EQUIPMENT),
+                ...selectable,
+              ]),
+            ])
+          }
+        >
+          {query.trim() ? "Select all shown" : "Select all"}
+        </button>
+        <button
+          type="button"
+          className="btn ghost"
+          disabled={!selected.length}
+          onClick={() => onChange([])}
+        >
+          Clear selection
+        </button>
+        <span className="fine-print" aria-live="polite">
+          {equipmentFree ? "Bodyweight only" : `${selected.length} selected`}
+        </span>
+      </div>
       <div className="setup-inventory equipment-inventory">
-        {equipmentChoices([...options, ...items]).map((item) => {
+        {shown.map((item) => {
           const disabled = equipmentFree && item !== NO_EQUIPMENT;
           return (
             <label
@@ -50,6 +99,12 @@ export default function EquipmentInventory({
           );
         })}
       </div>
+      {query.trim() && !selectable.length && (
+        <p className="fine-print equipment-inventory-note">
+          No matching equipment. Try another name. You can add custom equipment
+          in Settings.
+        </p>
+      )}
       {equipmentFree && (
         <p className="fine-print equipment-inventory-note" id={explanationId}>
           Bodyweight exercises only. Uncheck No equipment to select equipment.

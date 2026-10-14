@@ -53,7 +53,7 @@ test("optional setup saves the complete profile, chosen environment and nutritio
   await focus.focus();
   await focus.press("ArrowDown");
   await expect(
-    page.getByRole("option", { name: "Hypertrophy", exact: true }),
+    page.getByRole("option", { name: "General fitness", exact: true }),
   ).toBeFocused();
   await page.keyboard.press("End");
   await expect(
@@ -146,7 +146,9 @@ test("optional setup saves the complete profile, chosen environment and nutritio
   });
   await welcome.getByRole("button", { name: "Continue", exact: true }).click();
   await expect(welcome.locator(".setup-review")).toContainText("Nutrition");
-  await formControl(welcome, "Create an editable starter plan").uncheck();
+  await expect(
+    welcome.getByRole("button", { name: "Start empty", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
   await welcome.getByRole("button", { name: "Let’s get started" }).click();
   await expect(welcome).not.toBeVisible();
 
@@ -157,7 +159,7 @@ test("optional setup saves the complete profile, chosen environment and nutritio
     unit: "lb",
     experience: "Intermediate",
     duration: 35,
-    days: [1, 4, 5],
+    days: [1, 2, 3, 5],
     split: "Hybrid",
     effort: "both",
     restSeconds: 75,

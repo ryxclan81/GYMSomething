@@ -1,9 +1,34 @@
 import { describe, expect, it } from "vitest";
+import { selectOptionHelp } from "../src/domain/optionHelp";
 import {
   describeHelpControl,
   helpTopics,
   type HelpControlKind,
 } from "../src/data/help";
+
+describe("Option-specific meanings", () => {
+  it("distinguishes duration progression from duration sorting", () => {
+    expect(selectOptionHelp("Duration", "duration", "Strategy")).toContain(
+      "future time target",
+    );
+    expect(selectOptionHelp("Duration", "duration", "Sort workouts")).toContain(
+      "shortest estimated",
+    );
+    expect(selectOptionHelp("Duration", "duration")).toBeUndefined();
+  });
+  it("distinguishes no lighter week from hidden effort fields", () => {
+    expect(selectOptionHelp("None", "", "Planned lighter week")).toContain(
+      "Do not add",
+    );
+    expect(selectOptionHelp("None", "none", "Effort tracking")).toContain(
+      "effort inputs",
+    );
+    expect(selectOptionHelp("None", "none")).toBeUndefined();
+    expect(selectOptionHelp("Week 3", "3", "Planned lighter week")).toContain(
+      "week 3",
+    );
+  });
+});
 
 describe("Beginner control explanations", () => {
   it.each([

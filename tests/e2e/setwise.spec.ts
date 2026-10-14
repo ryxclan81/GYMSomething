@@ -32,7 +32,7 @@ test("field help works in onboarding and Escape keeps the setup open", async ({
 
 test.describe("phone touch help", () => {
   test.use({ hasTouch: true });
-  test("touch help explains a switch without changing it, then normal toggles save", async ({
+  test("local touch help explains a switch while normal toggles remain usable", async ({
     page,
   }) => {
     await quickOnboard(page, { name: "Taylor" });
@@ -43,19 +43,17 @@ test.describe("phone touch help", () => {
     const nutrition = page.locator(".settings-tools input.toggle").first();
     await expect(nutrition).not.toBeChecked();
     await page
-      .locator(".settings-page .page-header")
-      .getByRole("button", { name: "Explain controls", exact: true })
-      .click();
-    await nutrition.tap();
+      .getByRole("button", { name: "Explain Nutrition", exact: true })
+      .tap();
     await expect(
-      page.getByText("Nutrition tracking", { exact: true }),
+      page.getByRole("dialog", { name: "Nutrition", exact: true }),
     ).toBeVisible();
     await expect(nutrition).not.toBeChecked();
     expect((await persisted(page)).profile.nutrition).toBe(false);
-    await page
-      .getByRole("button", { name: /Exit help/i })
-      .last()
-      .click();
+    await page.keyboard.press("Escape");
+    await expect(
+      page.getByRole("button", { name: /Exit help|Explain controls/i }),
+    ).toHaveCount(0);
     await nutrition.tap();
     await expect(nutrition).toBeChecked();
     expect((await persisted(page)).profile.nutrition).toBe(true);
@@ -168,6 +166,7 @@ test("mouse and keyboard help describe controls without opening their screens", 
     .getByRole("button", { name: "Setwise home", exact: true })
     .focus();
   await page.keyboard.press("Tab");
+  await page.keyboard.press("Tab");
   await expect(settings).toBeFocused();
   await expect(page.getByRole("tooltip")).toContainText(
     "Change your preferences",
@@ -221,7 +220,7 @@ test("hover help waits, cancels when moving away and leaves covered controls cli
   const settings = page
     .locator(".app-header")
     .getByRole("button", { name: "Settings", exact: true });
-  const equipment = page.locator(".home-page").getByRole("button", {
+  const equipment = page.locator(".app-header").getByRole("button", {
     name: "Training equipment: Commercial Gym",
     exact: true,
   });
@@ -250,7 +249,9 @@ test("hover help waits, cancels when moving away and leaves covered controls cli
   expect(
     await page.evaluate(
       ({ x, y }) =>
-        Boolean(document.elementFromPoint(x, y)?.closest(".training-location")),
+        Boolean(
+          document.elementFromPoint(x, y)?.closest(".equipment-selector"),
+        ),
       point,
     ),
   ).toBe(true);
@@ -288,6 +289,7 @@ test("hovering another control restarts the delay and keyboard help remains imme
   await expect(page.getByRole("tooltip")).toContainText("Returns to Home");
   await page.keyboard.press("Escape");
   await home.focus();
+  await page.keyboard.press("Tab");
   await page.keyboard.press("Tab");
   await expect(settings).toBeFocused();
   await expect(page.getByRole("tooltip")).toContainText(

@@ -12,6 +12,7 @@ import "./setwise.css";
 import "./planning-ui.css";
 import "./timed-exercise.css";
 import "./evergreen.css";
+import "./usability.css";
 import { HelpProvider } from "./components/Help";
 import { initialize } from "./state/store";
 import { registerSW } from "virtual:pwa-register";

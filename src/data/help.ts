@@ -5,10 +5,6 @@ export interface HelpDescription {
 
 /** User-facing meanings and behavior, independent of DOM or storage internals. */
 export const helpTopics = {
-  help: {
-    title: "Help mode",
-    body: "Tap a control to see what it does. While Help mode is on, taps explain controls instead of changing your workout or settings. Choose Exit Help when you are ready to use them.",
-  },
   rir: {
     title: "Reps in reserve (RIR)",
     body: "Estimate how many more good repetitions you could have done when you stopped. RIR 2 means about two more reps; RIR 0 means none. It is your estimate of effort, not a measurement by the app.",
@@ -580,7 +576,7 @@ export function describeHelpControl(control: HelpControl): HelpDescription {
         term: "This label describes the nearby setting or result. Look at its units and surrounding explanation to understand the value.",
         file: "Choose a file from your device. The app checks supported formats before using it; selecting a backup does not complete a restore until you confirm.",
         button:
-          "Opens or performs the action named by this control. While Help mode is active, you can inspect it without running the action.",
+          "Uses the action named by this control. Read its label and any confirmation before continuing.",
       };
       result = { title: label, body: body[control.kind] };
     }

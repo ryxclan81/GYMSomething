@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { defaultData } from "../data/defaults";
+import { starterPresetData as defaultData } from "../data/defaults";
 import type { Program } from "./types";
+import { addDays } from "./helpers";
 import {
   alignTrainingDays,
   applyProgram,
@@ -204,5 +205,53 @@ describe("program application", () => {
     expect(programValidation(value)).toBeNull();
     value.startDate = "2026-02-30";
     expect(programValidation(value)).toContain("valid start");
+  });
+});
+
+describe("reusable programs without a schedule length", () => {
+  it("schedules a reviewed horizon without giving the reusable program a fixed length", () => {
+    const data = defaultData();
+    const value = program();
+    delete value.weeks;
+    const original = structuredClone(value);
+    const applied = applyProgram(data, value, { scheduleWeeks: 3 });
+    expect(applied.added).toBe(9);
+    expect(applied.preview.endDate).toBe(addDays(value.startDate, 20));
+    expect(data.programs.find((saved) => saved.id === value.id)).toEqual(
+      { ...original, archived: false },
+    );
+    expect(value).toEqual(original);
+    const extended = applyProgram(data, value, { scheduleWeeks: 5 });
+    expect(extended.added).toBe(6);
+    expect(data.schedule).toHaveLength(15);
+    expect(
+      data.programs.find((saved) => saved.id === value.id)?.weeks,
+    ).toBeUndefined();
+  });
+  it("rejects an invalid calendar horizon before modifying saved programs or dates", () => {
+    const data = defaultData();
+    const value = program();
+    delete value.weeks;
+    const original = structuredClone(data);
+    expect(() => applyProgram(data, value, { scheduleWeeks: 0 })).toThrow(
+      /length/,
+    );
+    expect(data).toEqual(original);
+  });
+  it("can be saved without a duration, and a reviewed four-week range still produces bounded dates", () => {
+    const value = program();
+    delete value.weeks;
+    delete value.deloadWeek;
+    delete value.phases;
+    expect(programValidation(value)).toBeNull();
+    const preview = previewProgram(value, defaultData().templates);
+    expect(preview.entries).toHaveLength(12);
+    expect(preview.endDate).toBe(addDays(value.startDate, 27));
+  });
+  it("requires explicit schedule weeks for week-specific phase or lighter-week targets", () => {
+    const value = program();
+    delete value.weeks;
+    value.deloadWeek = 2;
+    expect(programValidation(value)).toContain("within this block");
   });
 });

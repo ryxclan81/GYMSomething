@@ -135,6 +135,8 @@ export interface Template {
   archived?: boolean;
   updatedAt: string;
   icon?: WorkoutIconId;
+  /** Repeat the ordered movements until this time target; rounds are logged explicitly. */
+  circuit?: { durationSeconds: number };
   planningSource?: {
     programId: string;
     templateId: string;
@@ -158,7 +160,7 @@ export interface Program {
   id: string;
   name: string;
   description: string;
-  weeks: number;
+  weeks?: number;
   startDate: string;
   templateIds: string[];
   days: number[];
@@ -201,6 +203,7 @@ export interface WorkoutSet {
   skipped: boolean;
   completedAt?: string;
   note?: string;
+  circuitRound?: number;
 }
 export interface SessionExercise {
   id: string;
@@ -233,6 +236,13 @@ export interface Session {
     elapsedMs: number;
     startedAt?: number;
     targetSeconds: number;
+  };
+  circuit?: {
+    durationSeconds: number;
+    elapsedMs: number;
+    startedAt?: number;
+    finishedAt?: number;
+    round: number;
   };
 }
 export interface GoalTimeline {

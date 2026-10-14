@@ -35,8 +35,9 @@ npm run preview
 
 - A welcome screen followed by five-step optional onboarding with quick defaults, visible grouped preferences, optional bodyweight and cm or feet/inches height, and multiple editable equipment inventories.
 - A bundled 728-exercise library with real source instructions, typo-tolerant search/filters/favorites, custom exercises/media and attribution.
-- Day-first Home and Train views listing every actual scheduled workout, selectable upcoming dates and clear rest/empty states; a separate Workout library supports unscheduled starts.
-- Fifteen base starter workouts, nine multiweek programs, dated application previews, keep/replace plan choices, optional weekly phases with separate editable targets, rest days and equipment substitutions.
+- Home lists every scheduled workout for the selected day; swipe its week calendar on phones. Workouts is the dedicated reusable library for unscheduled starts.
+- Fresh libraries start empty. Onboarding or Plan can add a small set of presets matched to your focus, experience, available equipment and time. Programs organize workouts with optional schedule length and weekly phases.
+- Timed repeated circuits support per-round targets (for example 5 pull-ups, 10 push-ups and 15 squats for 20 minutes), a persistent pauseable clock and explicit full/partial-round recording. Drag handles, keyboard and tap controls reorder exercises and program rotations.
 - Today's exercise overview and focused exercise logging with primary/secondary muscles, targets, prior values, effort/notes, history edits, rest timers, persistent hold timers and interrupted-session recovery. Set categories remain available in secondary actions.
 - Saved-data trends, personal records, muscle-set analysis, configurable progression decisions, goals, body measurements, weekly streaks and optional milestones. Weight goals offer editable rate/weeks/date estimates, fixed manual deadlines and first reached dates from recorded history.
 - A visible Nutrition destination with explicit enablement, 905 sourced offline USDA foods, manual/cached foods, diary portions, recipes/saved meals, macros/water and paginated Open Food Facts lookup.
@@ -44,7 +45,7 @@ npm run preview
 - Evergreen dark surfaces with Sage, Sky blue, Soft violet or Neutral accents and Comfortable/Compact spacing in Settings → Appearance. The mobile navigation reserves its own row so it cannot cover scrolling content.
 - A 22-icon workout picker, newest-first saved workouts with alternate sorts, and permanent template deletion that preserves recorded session snapshots.
 
-New installations start without fabricated completed workouts or statistics. Onboarding offers an optional two-week starter calendar using Automatic or a selected workout preset; these are editable planned entries. Program application preserves recorded/skipped/session-linked entries and explicit rest days. Equipment inventories and nutrient targets are editable examples. Training recommendations and time estimates use transparent configurable assumptions, not diagnoses or guaranteed outcomes.
+New installations start with an empty workout/program library and no fabricated history. Onboarding explicitly asks whether to add matching presets; only that opt-in exposes optional two-week calendar creation. Existing users keep their saved libraries. Program deletion preserves workout templates, calendar plans and history; workout deletion removes its program references while keeping recorded snapshots. Program application preserves recorded/skipped/session-linked entries and explicit rest days. Equipment inventories and nutrient targets are editable examples. Training recommendations and time estimates use transparent configurable assumptions, not diagnoses or guaranteed outcomes.
 
 ## Install on iPhone
 
@@ -86,6 +87,14 @@ npm run test:e2e
 Exact executed commands, passed/failed checks, browser coverage, offline verification and retained artifacts are in [TEST_REPORT.md](TEST_REPORT.md). These checks establish software behavior; they do not scientifically validate a training protocol or replace physical-device testing.
 
 ## Change log
+
+### 1.5.0 · 14 October 2026
+
+- Replaced duplicate Train daily selection with a reusable Workouts library; daily selection and post-save return use Home. Simplified the header to a compact equipment icon and clarified desktop/mobile selected navigation.
+- Added direct inventory management, equipment search/bulk selection, consistent button spacing and phone calendar swipes.
+- Removed global Help mode. Help icons open local explanations; hover waits 700 ms and dropdown choices explain their own options.
+- Added profile-matched opt-in presets, optional program schedule length, program deletion with preserved history and drag/keyboard/tap reordering.
+- Added timed repeating circuits, full/partial round logging and persistent active-time clocks.
 
 ### 1.4.1 · 12 October 2026
 

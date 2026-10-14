@@ -82,13 +82,9 @@ test("a preset previews actual dates, applies to Home and Today, and can be reap
   await page.screenshot({
     path: "artifacts/screenshots/daily-workouts-mobile.png",
   });
-  await nav(page, "Train");
-  await expect(
-    page.getByRole("button", { name: "Today", exact: true }),
-  ).toHaveAttribute("aria-pressed", "true");
-  await expect(
-    page.getByRole("button", { name: "Start Full Body A", exact: true }),
-  ).toBeVisible();
+  await nav(page, "Workouts");
+  await expect(page.getByRole("heading", { name: "Your workouts.", exact: true })).toBeVisible();
+  await expect(page.locator(".template-grid")).toContainText("Full Body A");
   await page.reload();
   dialog = await useProgram(page, "Full Body · 3 days");
   await dialog
@@ -131,7 +127,7 @@ test("two workouts on one day remain selectable and the chosen calendar entry su
   await expect(
     page.getByRole("button", { name: "Start Full Body B", exact: true }),
   ).toBeVisible();
-  await nav(page, "Train");
+  await nav(page, "Home");
   await expect(page.locator(".daily-workout")).toHaveCount(2);
   await page
     .getByRole("button", { name: "Start Full Body B", exact: true })
@@ -176,7 +172,7 @@ test("two workouts on one day remain selectable and the chosen calendar entry su
     .click();
   await page.getByRole("button", { name: "Save workout", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Let’s train.", exact: true }),
+    page.getByRole("heading", { name: /Good / }),
   ).toBeVisible();
   data = await persisted(page);
   expect(data.sessions[0].scheduleId).toBe(chosen.id);
@@ -206,13 +202,17 @@ test("phase targets made in the editor become separate saved workout versions an
   await page.getByRole("button", { name: "Programs", exact: true }).click();
   await page.getByRole("button", { name: "New program", exact: true }).click();
   const editor = page.getByRole("dialog", {
-    name: "New training block",
+    name: "New program",
     exact: true,
   });
   await formControl(editor, "Program name", { exact: true }).fill(
     "Two phase practice",
   );
-  await choose(formControl(editor, "Block length"), "2 weeks", true);
+  await choose(
+    formControl(editor, "Schedule length (optional)"),
+    "2 weeks",
+    true,
+  );
   const weekday = await page.evaluate(() =>
     new Date().toLocaleDateString("en-US", { weekday: "short" }),
   );
@@ -241,10 +241,10 @@ test("phase targets made in the editor become separate saved workout versions an
   await formControl(phase, "Base load (%)").fill("60");
   await formControl(phase, "Minimum reps (optional)").fill("5");
   await formControl(phase, "Maximum reps (optional)").fill("6");
-  await expect(
-    formControl(editor, "Add this block to my calendar"),
-  ).toBeChecked();
-  await editor.getByRole("button", { name: "Save block", exact: true }).click();
+  await formControl(editor, "Also schedule dates now").check();
+  await editor
+    .getByRole("button", { name: "Save program", exact: true })
+    .click();
   await expect(editor).not.toBeVisible();
   let data = await persisted(page);
   const program = data.programs.find(
@@ -302,7 +302,7 @@ test("phase targets made in the editor become separate saved workout versions an
   expect(
     data.schedule.filter((entry) => entry.programId === program.id),
   ).toHaveLength(2);
-  await page.getByRole("button", { name: "Workouts", exact: true }).click();
+  await page.locator(".plan-page .segmented-control").getByRole("button", { name: "Workouts", exact: true }).click();
   await page
     .locator(".template-row")
     .filter({

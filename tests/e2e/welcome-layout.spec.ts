@@ -69,7 +69,7 @@ test("the logo goes home and mobile scrolling clears the bottom navigation", asy
     .getByRole("button", { name: "Plan", exact: true })
     .click();
   const header = page.locator(".app-header");
-  await expect(header.locator("button:visible")).toHaveCount(2);
+  await expect(header.locator("button:visible")).toHaveCount(3);
   await header
     .getByRole("button", { name: "Setwise home", exact: true })
     .click();
@@ -168,7 +168,7 @@ test("common bodyweight movements can be found with spelling mistakes", async ({
   await quickOnboard(page);
   await page
     .getByRole("navigation", { name: "Mobile navigation" })
-    .getByRole("button", { name: "Train", exact: true })
+    .getByRole("button", { name: "Workouts", exact: true })
     .click();
   await page
     .getByRole("button", { name: "Exercise library", exact: true })

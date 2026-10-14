@@ -1,0 +1,92 @@
+/* Consistent breathing room and navigation cues across compact controls. */
+.btn {
+  padding: 12px 18px;
+  gap: 8px;
+  min-height: 44px;
+}
+.text-btn,
+.text-button {
+  padding: 10px 12px;
+  min-height: 44px;
+}
+.list-row > button:not(.icon-btn):not(.help-tip) {
+  padding: 12px 16px;
+}
+.header-controls .equipment-selector {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  padding: 10px;
+}
+.header-controls .equipment-selector > svg {
+  display: block;
+  flex-shrink: 0;
+}
+.daily-workout {
+  padding: 18px 12px;
+}
+.calendar-period-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0 10px;
+}
+.calendar-period-controls > span {
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+.settings-toggle-row {
+  gap: 4px;
+}
+.settings-toggle-label {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: pointer;
+}
+.settings-toggle-label > div {
+  min-width: 0;
+}
+.settings-toggle-label .toggle,
+.help-button {
+  flex-shrink: 0;
+}
+.focus-topbar > .help-button {
+  margin-left: auto;
+}
+@media (max-width: 900px) {
+  .bottom-nav button.selected {
+    color: var(--text);
+    background: transparent;
+    font-weight: 750;
+  }
+  .bottom-nav button.selected > svg {
+    color: var(--accent);
+    stroke-width: 2.8;
+  }
+  .bottom-nav button.selected > span {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 6px;
+  }
+  .page-header {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .page-header > div {
+    min-width: 0;
+  }
+  .daily-workout {
+    padding: 16px 10px;
+  }
+}

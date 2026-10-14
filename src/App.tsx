@@ -5,7 +5,7 @@ import {
   type TemplateSort,
 } from "./domain/templates";
 import { Brand as Logo } from "./components/Brand";
-import { HelpToggle } from "./components/Help";
+import { useHorizontalSwipe } from "./components/useHorizontalSwipe";
 import WorkoutIcon from "./components/WorkoutIcon";
 import Onboarding from "./components/Onboarding";
 import { DailyWorkouts } from "./components/DailyWorkouts";
@@ -27,7 +27,7 @@ import {
   ArrowRight,
   Check,
   ChevronRight,
-  ChevronDown,
+  ChevronLeft,
   WifiOff,
   Plus,
   MapPin,
@@ -84,7 +84,7 @@ type Tab =
   | "summary";
 const mainTabs = [
   { key: "home", label: "Home", icon: HomeIcon },
-  { key: "train", label: "Train", icon: Dumbbell },
+  { key: "train", label: "Workouts", icon: Dumbbell },
   { key: "plan", label: "Plan", icon: CalendarDays },
   { key: "progress", label: "Progress", icon: ChartNoAxesCombined },
   { key: "nutrition", label: "Nutrition", icon: Utensils },
@@ -121,7 +121,10 @@ export default function App() {
     [lastSaved, setLastSaved] = useState<Session | null>(null),
     [editing, setEditing] = useState<Session | null>(null);
   const [exerciseFocused, setExerciseFocused] = useState(false);
+  const [settingsPane, setSettingsPane] = useState<"equipment" | undefined>();
   const [startingSetup, setStartingSetup] = useState(false);
+  const activeNavTab =
+    tab === "workout" ? "home" : tab === "library" ? "train" : tab;
   const [adapt, setAdapt] = useState<{
       template: Template;
       scheduleId?: string;
@@ -156,6 +159,7 @@ export default function App() {
     data.equipment.find((e) => e.id === data.activeEquipmentId) ??
     data.equipment[0];
   function navigate(next: Tab) {
+    if (next === "settings") setSettingsPane(undefined);
     setExerciseFocused(false);
     setEditing(null);
     setTab(next);
@@ -231,7 +235,7 @@ export default function App() {
       setTab("summary");
     } else {
       setLastSaved(session);
-      setTab("train");
+      setTab("home");
       toast("Workout saved. Choose your next workout when you’re ready.");
     }
   }
@@ -277,13 +281,12 @@ export default function App() {
             {mainTabs.map((t) => (
               <button
                 key={t.key}
-                aria-current={tab === t.key ? "page" : undefined}
-                className={tab === t.key ? "selected" : ""}
+                aria-current={activeNavTab === t.key ? "page" : undefined}
+                className={activeNavTab === t.key ? "selected" : ""}
                 onClick={() => navigate(t.key)}
               >
                 <t.icon size={20} />
                 {t.label}
-                {tab === t.key && <span className="nav-dot" />}
               </button>
             ))}
           </nav>
@@ -307,16 +310,13 @@ export default function App() {
                 </span>
               )}
               <button
-                className="equipment-switch desktop-equipment"
+                className="icon-btn equipment-switch equipment-selector"
                 data-help-topic="equipment"
                 aria-label={`Training equipment: ${equipment?.name}`}
                 onClick={() => setEquipmentOpen(true)}
               >
-                <MapPin size={14} />
-                <span>{equipment?.name}</span>
-                <ChevronDown size={14} />
+                <MapPin size={20} aria-hidden="true" />
               </button>
-              <HelpToggle compact className="icon-btn header-help" />
               <IconButton
                 className="mobile-settings"
                 label="Settings"
@@ -379,16 +379,6 @@ export default function App() {
                   onProgress={() => navigate("progress")}
                   onStart={begin}
                   onBackup={() => navigate("settings")}
-                  onEquipment={() => setEquipmentOpen(true)}
-                />
-              )}
-              {tab === "train" && (
-                <Train
-                  onLibrary={() => navigate("library")}
-                  onEquipment={() => setEquipmentOpen(true)}
-                  onPlan={() => navigate("plan")}
-                  onStart={begin}
-                  onProgress={() => navigate("progress")}
                   savedSession={
                     data.sessions.find(
                       (session) => session.id === lastSaved?.id,
@@ -398,10 +388,18 @@ export default function App() {
                     const saved = data.sessions.find(
                       (session) => session.id === lastSaved?.id,
                     );
-                    if (!saved) return;
-                    setSummary(saved);
-                    setTab("summary");
+                    if (saved) {
+                      setSummary(saved);
+                      setTab("summary");
+                    }
                   }}
+                />
+              )}
+              {tab === "train" && (
+                <Workouts
+                  onLibrary={() => navigate("library")}
+                  onPlan={() => navigate("plan")}
+                  onStart={begin}
                 />
               )}
               {tab === "plan" && <Plan onStart={begin} />}
@@ -418,6 +416,8 @@ export default function App() {
               )}
               {tab === "settings" && (
                 <Settings
+                  key={settingsPane ?? "main"}
+                  initialPane={settingsPane}
                   onBack={() => navigate("home")}
                   onNutrition={() => navigate("nutrition")}
                 />
@@ -429,7 +429,7 @@ export default function App() {
                 <Workout
                   session={editing ?? data.activeSession!}
                   history={!!editing}
-                  onBack={() => navigate("train")}
+                  onBack={() => navigate("home")}
                   onComplete={finished}
                   onFocusChange={setExerciseFocused}
                 />
@@ -463,12 +463,8 @@ export default function App() {
           {mainTabs.map((t) => (
             <button
               key={t.key}
-              aria-current={tab === t.key ? "page" : undefined}
-              className={
-                tab === t.key || (tab === "workout" && t.key === "train")
-                  ? "selected"
-                  : ""
-              }
+              aria-current={activeNavTab === t.key ? "page" : undefined}
+              className={activeNavTab === t.key ? "selected" : ""}
               onClick={() => navigate(t.key)}
             >
               <t.icon size={21} />
@@ -518,7 +514,8 @@ export default function App() {
               className="full"
               onClick={() => {
                 setEquipmentOpen(false);
-                navigate("settings");
+                setSettingsPane("equipment");
+                setTab("settings");
               }}
             >
               Manage equipment
@@ -609,45 +606,36 @@ export default function App() {
     </ErrorBoundary>
   );
 }
-function EnvironmentButton({ onClick }: { onClick: () => void }) {
-  const { data } = useApp();
-  const equipment = data.equipment.find(
-    (item) => item.id === data.activeEquipmentId,
-  );
-  return (
-    <button
-      className="training-location"
-      data-help-topic="equipment"
-      aria-label={`Training equipment: ${equipment?.name}`}
-      onClick={onClick}
-    >
-      <MapPin size={15} aria-hidden="true" />
-      <span>
-        Training at <strong>{equipment?.name}</strong>
-      </span>
-      <span className="training-location-action">Change</span>
-    </button>
-  );
-}
 function Home({
   onTrain,
   onPlan,
   onProgress,
   onStart,
   onBackup,
-  onEquipment,
+  savedSession,
+  onReviewSaved,
 }: {
   onTrain: () => void;
   onPlan: () => void;
   onProgress: () => void;
   onStart: (t: Template, s?: string) => void;
   onBackup: () => void;
-  onEquipment: () => void;
+  savedSession: Session | null;
+  onReviewSaved: () => void;
 }) {
   const { data } = useApp();
   const [selectedDay, setSelectedDay] = useState(dateKey());
   const today = dateKey(),
     week = weekStart();
+  const [shownWeek, setShownWeek] = useState(week);
+  const changeWeek = (direction: number) => {
+    setShownWeek((current) => addDays(current, direction * 7));
+    setSelectedDay((current) => addDays(current, direction * 7));
+  };
+  const swipe = useHorizontalSwipe({
+    onPrevious: () => changeWeek(-1),
+    onNext: () => changeWeek(1),
+  });
   const weekSessions = data.sessions.filter(
     (session) =>
       session.completedAt &&
@@ -690,12 +678,38 @@ function Home({
           {reminder.message}
         </div>
       )}
-      <EnvironmentButton onClick={onEquipment} />
+      {savedSession && (
+        <div className="section-heading saved-workout-feedback">
+          <span className="small muted">Saved · {savedSession.name}</span>
+          <button className="text-btn" onClick={onReviewSaved}>
+            Review saved workout
+          </button>
+        </div>
+      )}
       <div className="home-layout">
         <div className="home-main">
-          <div className="home-day-picker" aria-label="This week's workouts">
+          <div className="calendar-period-controls">
+            <IconButton label="Previous week" onClick={() => changeWeek(-1)}>
+              <ChevronLeft size={18} aria-hidden="true" />
+            </IconButton>
+            <span aria-live="polite">
+              {formatDate(shownWeek, { month: "short", day: "numeric" })} –{" "}
+              {formatDate(addDays(shownWeek, 6), {
+                month: "short",
+                day: "numeric",
+              })}
+            </span>
+            <IconButton label="Next week" onClick={() => changeWeek(1)}>
+              <ChevronRight size={18} aria-hidden="true" />
+            </IconButton>
+          </div>
+          <div
+            className="home-day-picker"
+            aria-label="This week's workouts"
+            {...swipe}
+          >
             {Array.from({ length: 7 }, (_, i) => {
-              const day = addDays(week, i);
+              const day = addDays(shownWeek, i);
               const completed = data.sessions.some(
                 (session) =>
                   session.completedAt &&
@@ -837,25 +851,16 @@ function Home({
     </div>
   );
 }
-function Train({
+function Workouts({
   onLibrary,
-  onEquipment,
   onPlan,
   onStart,
-  onProgress,
-  savedSession,
-  onReviewSaved,
 }: {
   onLibrary: () => void;
-  onEquipment: () => void;
   onPlan: () => void;
   onStart: (t?: Template, scheduleId?: string) => void;
-  onProgress: () => void;
-  savedSession: Session | null;
-  onReviewSaved: () => void;
 }) {
   const { data } = useApp();
-  const [view, setView] = useState<"today" | "library">("today");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<TemplateSort>("recent");
   const equipment = data.equipment.find(
@@ -875,154 +880,117 @@ function Train({
     <div className="page train-page">
       <header className="page-header">
         <div>
-          <h1>Let’s train.</h1>
-          <p className="muted">Pick a planned session or build your own.</p>
+          <h1>Your workouts.</h1>
+          <p className="muted">Reusable workouts, ready when you need them.</p>
         </div>
         <Button variant="secondary" onClick={onLibrary}>
           <Dumbbell size={18} aria-hidden="true" /> Exercise library
         </Button>
       </header>
-      <EnvironmentButton onClick={onEquipment} />
-      {savedSession && (
-        <div className="section-heading saved-workout-feedback">
-          <span className="small muted">Saved · {savedSession.name}</span>
-          <button className="text-btn" onClick={onReviewSaved}>
-            Review saved workout
+      <section className="workout-library">
+        <div className="section-heading">
+          <h2>Workout library</h2>
+          <button className="text-btn" onClick={onPlan}>
+            <Plus size={16} aria-hidden="true" /> Create / edit
           </button>
         </div>
-      )}
-      <div
-        className="segmented train-views"
-        role="group"
-        aria-label="Training view"
-      >
-        <button
-          aria-pressed={view === "today"}
-          className={view === "today" ? "selected" : ""}
-          onClick={() => setView("today")}
-        >
-          Today
-        </button>
-        <button
-          aria-pressed={view === "library"}
-          className={view === "library" ? "selected" : ""}
-          onClick={() => setView("library")}
-        >
-          Workout library
-        </button>
-      </div>
-      {view === "today" ? (
-        <DailyWorkouts
-          onStart={onStart}
-          onPlan={onPlan}
-          onReview={onProgress}
-        />
-      ) : (
-        <section className="workout-library">
-          <div className="section-heading">
-            <h2>Workout library</h2>
-            <button className="text-btn" onClick={onPlan}>
-              <Plus size={16} aria-hidden="true" /> Create / edit
-            </button>
-          </div>
-          <Field label="Search workouts">
-            <input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Name or training focus"
-            />
-          </Field>
-          <Field label="Sort workouts">
-            <Select
-              value={sort}
-              onValueChange={(value) => setSort(value as TemplateSort)}
-            >
-              {templateSortOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <div className="template-grid">
-            {templates.map((template) => {
-              const missing = template.exercises.filter((prescription) => {
-                const exercise = data.exercises.find(
-                  (item) => item.id === prescription.exerciseId,
-                );
-                return (
-                  exercise &&
-                  !equipmentCompatibility(
-                    exercise,
-                    equipment,
-                    prescription.weightKg,
-                  ).compatible
-                );
-              }).length;
-              return (
-                <article className="template-card" key={template.id}>
-                  <div className="template-card-heading">
-                    <div className="template-title">
-                      <span className="template-muscle-icon">
-                        <WorkoutIcon
-                          template={template}
-                          exercises={data.exercises}
-                          size={38}
-                        />
-                      </span>
-                      <div>
-                        <h3>{template.name}</h3>
-                        <span className="muted">{template.focus}</span>
-                      </div>
-                    </div>
-                    <span className="muted">{template.minutes} min</span>
-                  </div>
-                  <p className="muted small template-description">
-                    {template.description}
-                  </p>
-                  <details className="template-exercises">
-                    <summary>{template.exercises.length} exercises</summary>
-                    <div className="template-movements">
-                      {template.exercises.map((prescription) => {
-                        const exercise = data.exercises.find(
-                          (item) => item.id === prescription.exerciseId,
-                        );
-                        return (
-                          <div key={prescription.id}>
-                            <strong>{exercise?.name}</strong>
-                            <span>{exercise?.primary.join(", ")}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </details>
-                  {missing > 0 && (
-                    <p className="small warning">
-                      {missing} movement{missing === 1 ? "" : "s"} to adapt for
-                      this equipment
-                    </p>
-                  )}
-                  <Button
-                    variant="secondary"
-                    className="full"
-                    onClick={() => onStart(template)}
-                  >
-                    {missing ? "Adapt & start" : "Start workout"}
-                    <ChevronRight size={17} aria-hidden="true" />
-                  </Button>
-                </article>
+        <Field label="Search workouts">
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Name or training focus"
+          />
+        </Field>
+        <Field label="Sort workouts">
+          <Select
+            value={sort}
+            onValueChange={(value) => setSort(value as TemplateSort)}
+          >
+            {templateSortOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <div className="template-grid">
+          {templates.map((template) => {
+            const missing = template.exercises.filter((prescription) => {
+              const exercise = data.exercises.find(
+                (item) => item.id === prescription.exerciseId,
               );
-            })}
-          </div>
-          {!templates.length && (
-            <Empty
-              title="No matching workouts"
-              description="Try a different name or create a workout in Plan."
-            />
-          )}
-        </section>
-      )}
+              return (
+                exercise &&
+                !equipmentCompatibility(
+                  exercise,
+                  equipment,
+                  prescription.weightKg,
+                ).compatible
+              );
+            }).length;
+            return (
+              <article className="template-card" key={template.id}>
+                <div className="template-card-heading">
+                  <div className="template-title">
+                    <span className="template-muscle-icon">
+                      <WorkoutIcon
+                        template={template}
+                        exercises={data.exercises}
+                        size={38}
+                      />
+                    </span>
+                    <div>
+                      <h3>{template.name}</h3>
+                      <span className="muted">{template.focus}</span>
+                    </div>
+                  </div>
+                  <span className="muted">{template.minutes} min</span>
+                </div>
+                <p className="muted small template-description">
+                  {template.description}
+                </p>
+                <details className="template-exercises">
+                  <summary>{template.exercises.length} exercises</summary>
+                  <div className="template-movements">
+                    {template.exercises.map((prescription) => {
+                      const exercise = data.exercises.find(
+                        (item) => item.id === prescription.exerciseId,
+                      );
+                      return (
+                        <div key={prescription.id}>
+                          <strong>{exercise?.name}</strong>
+                          <span>{exercise?.primary.join(", ")}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </details>
+                {missing > 0 && (
+                  <p className="small warning">
+                    {missing} movement{missing === 1 ? "" : "s"} to adapt for
+                    this equipment
+                  </p>
+                )}
+                <Button
+                  variant="secondary"
+                  className="full"
+                  onClick={() => onStart(template)}
+                >
+                  {missing ? "Adapt & start" : "Start workout"}
+                  <ChevronRight size={17} aria-hidden="true" />
+                </Button>
+              </article>
+            );
+          })}
+        </div>
+        {!templates.length && (
+          <Empty
+            title="No matching workouts"
+            description="Try a different name or create a workout in Plan."
+          />
+        )}
+      </section>
       <section className="open-workout">
         <div>
           <h2>Unscheduled workout</h2>

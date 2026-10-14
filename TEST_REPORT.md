@@ -1,5 +1,23 @@
 # Setwise validation report
 
+Setwise **1.5.0** verification: **October 14, 2026**.
+
+## Current results
+
+- TypeScript, ESLint, production build and whitespace checks pass.
+- **389 unit/integration tests pass in 23 files**.
+- **65 browser journeys pass against the frozen production build**: 63 passed in the complete 65-test run. The other two were corrected test assumptions (reopening retained exercise focus; controlled-clock menu keyboard focus needs its queued callback to run). The eight-test circuit/navigation rerun passed seven, and the final option-keyboard rerun passed the remaining journey. No application changes followed the final production build.
+- New browser coverage includes actual touch calendar swipes and the first tap afterward, tab remounting/day selection, desktop/mobile navigation cues, direct equipment management, fuzzy inventory search/bulk selection, centered padded buttons, mouse/touch/keyboard/tap reordering and saved stable IDs.
+- Fresh onboarding defaults to an empty library. Explicit matched-preset opt-in, home floor calisthenics compatibility, optional calendar scheduling and reusable programs retaining no expiry all pass through reload. Program/workout deletion preserves actual history and removes the appropriate references.
+- Timed-circuit journeys cover custom 5/10/15 targets for 20 minutes, full and partial actual rounds, expiry without fabricated work, offline active-clock recovery, paused time exclusion, empty-save protection, and history corrections/record removal. Fractional, negative and empty numeric drafts remain valid across reload; history guards protect original movement/round slots.
+- Local help works by click/tap without a global mode. Help-icon hover remains quiet; ordinary hover waits 700 ms. Dropdown explanations follow specific option semantics, including different meanings of Duration and None.
+- Existing storage/backup/quota, substitutions, nutrition/food lookup, timers, goal calculations, responsive layout and scoped automated accessibility journeys remain passing.
+- Capacitor iOS asset synchronization passes. Xcode build/signing and physical iPhone/Safari/VoiceOver/camera tests remain unrun on this Windows machine. Hosted browser verification remains skipped at the user's request; GitHub Actions publishing is checked separately.
+
+Evidence: `artifacts/setwise-1.5-verified`, `artifacts/guards-help-final`, `artifacts/option-keyboard-final` and `artifacts/screenshots`; generated records/traces are excluded from GitHub source. The current main chunk is approximately 2.04 MB / 381 KB gzipped, with 30 precached entries totaling approximately 3.11 MiB. The existing build-size advisory is not a failure; Pages base-path configuration is unchanged.
+
+## Historical 1.4.1 verification
+
 Setwise **1.4.1** verification: **October 12, 2026**.
 
 ## Current results
@@ -56,7 +74,6 @@ The final main chunk is approximately 2.00 MB, 367 KB gzipped. The precache incl
 Local screenshots and traces are generated evidence and are excluded from the GitHub source repository. The retained files include `artifacts/setwise-test-results`, `artifacts/legacy-help-results`, `artifacts/legacy-help-rerun-results` and `artifacts/screenshots/setwise-*.png`.
 
 ## Historical 1.2.0 verification
-
 
 Setwise **1.2.0** delivery verification: **October 11, 2026**. This report describes executed checks, rather than treating browser emulation as a physical iPhone test. The latest pass covers the graphite/steel-blue redesign, all daily workouts, preset application previews, weekly phases, cm/feet/inches height, visible optional onboarding, editable goal timelines, saved appearance preferences and phone-local persistence.
 

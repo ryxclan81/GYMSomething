@@ -122,12 +122,12 @@ test("saving a workout returns to Today's selection and releases the next planne
     .click();
   await page.getByRole("button", { name: "Save workout", exact: true }).click();
 
+  await expect(page.getByRole("heading", { name: /Good / })).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Let’s train.", exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Today", exact: true }),
-  ).toHaveAttribute("aria-pressed", "true");
+    page
+      .getByRole("navigation", { name: "Mobile navigation" })
+      .getByRole("button", { name: "Home", exact: true }),
+  ).toHaveAttribute("aria-current", "page");
   await expect(page.locator(".toast")).toContainText("Workout saved");
   const saved = await persisted(page);
   expect(saved.activeSession).toBeNull();
@@ -149,7 +149,7 @@ test("saving a workout returns to Today's selection and releases the next planne
   ).toBeVisible();
   await page
     .getByRole("navigation", { name: "Mobile navigation" })
-    .getByRole("button", { name: "Train", exact: true })
+    .getByRole("button", { name: "Home", exact: true })
     .click();
   await page
     .getByRole("button", { name: `Start ${nextTemplate.name}`, exact: true })

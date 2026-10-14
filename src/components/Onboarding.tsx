@@ -34,7 +34,8 @@ import {
   normalizeEquipmentSelection,
 } from "../domain/equipmentSelection";
 
-import { applyProgram, alignTrainingDays } from "../domain/planning";
+import { applyProgram } from "../domain/planning";
+import { addRecommendedPresets, recommendPresets } from "../domain/presets";
 
 const focuses: Focus[] = [
   "Hypertrophy",
@@ -146,10 +147,6 @@ export default function Onboarding({ onDone }: { onDone?: () => void }) {
   const [step, setStep] = useState(0),
     [p, setP] = useState<Profile>(() => ({
       ...structuredClone(data.profile),
-
-      focus: "Hypertrophy",
-
-      days: [1, 2, 4, 5],
     }));
 
   const [environments, setEnvironments] = useState<EquipmentProfile[]>(() =>
@@ -161,8 +158,8 @@ export default function Onboarding({ onDone }: { onDone?: () => void }) {
     ),
     [avoid, setAvoid] = useState(data.profile.avoid.join(", ")),
     [split, setSplit] = useState("Automatic"),
-    [makePlan, setMakePlan] = useState(true),
-    [preset, setPreset] = useState("automatic"),
+    [addPresets, setAddPresets] = useState(false),
+    [makePlan, setMakePlan] = useState(false),
     [reminders, setReminders] = useState(data.reminders.enabled),
     [busy, setBusy] = useState(false);
 
@@ -253,55 +250,31 @@ export default function Onboarding({ onDone }: { onDone?: () => void }) {
 
         d.reminders.days = [...p.days];
 
-        const programKey =
-          equipmentId === "eq-home"
-            ? "prg-home"
-            : split === "Upper / lower"
-              ? "prg-upperlower"
-              : split === "Push / pull / legs"
-                ? "prg-ppl"
-                : split === "Full body"
-                  ? "prg-full"
-                  : split === "Hybrid"
-                    ? "prg-hybrid"
-                    : p.focus === "Strength"
-                      ? "prg-strength"
-                      : p.focus === "Calisthenics"
-                        ? "prg-bodyweight"
-                        : p.focus === "Hybrid" || p.focus === "Cardio"
-                          ? "prg-hybrid"
-                          : p.focus === "Hypertrophy"
-                            ? p.days.length >= 5
-                              ? "prg-five"
-                              : p.days.length >= 4
-                                ? "prg-upperlower"
-                                : "prg-ppl"
-                            : "prg-full";
-
-        const program = d.programs.find(
-          (program) =>
-            program.id === (preset === "automatic" ? programKey : preset),
-        );
-
-        d.profile.split =
-          split === "Automatic" ? (program?.name ?? "Custom") : split;
-
-        if (makePlan && !d.schedule.length && program && p.days.length) {
-          applyProgram(d, {
-            ...program,
-            id: id(),
-            name: `${program.name} · starter`,
-
-            startDate: dateKey(),
-            weeks: 2,
-            deloadWeek: undefined,
-            phases: undefined,
-
-            days:
-              preset === "automatic"
-                ? p.days
-                : alignTrainingDays(program.days, dateKey()),
-          });
+        d.profile.split = split === "Automatic" ? "Custom" : split;
+        if (addPresets) {
+          const recommendation = recommendPresets(
+            d.profile,
+            d.equipment.find((item) => item.id === equipmentId)!,
+            d.exercises,
+          );
+          addRecommendedPresets(d, recommendation);
+          d.profile.split =
+            split === "Automatic" ? recommendation.program.name : split;
+          if (
+            makePlan &&
+            !d.schedule.length &&
+            recommendation.templates.length &&
+            p.days.length
+          ) {
+            applyProgram(
+              d,
+              {
+                ...recommendation.program,
+                startDate: dateKey(),
+              },
+              { scheduleWeeks: 2 },
+            );
+          }
         }
       });
 
@@ -799,47 +772,47 @@ export default function Onboarding({ onDone }: { onDone?: () => void }) {
                     className="equipment-profile-details"
                     disabled={environment.items.includes(NO_EQUIPMENT)}
                   >
-                  <Field
-                    label={`Maximum dumbbell weight (${p.unit} each), optional`}
-                  >
-                    <NumericInput
-                      min={0.1}
+                    <Field
+                      label={`Maximum dumbbell weight (${p.unit} each), optional`}
+                    >
+                      <NumericInput
+                        min={0.1}
 
-                      max={p.unit === "kg" ? 200 : 440}
+                        max={p.unit === "kg" ? 200 : 440}
 
-                      step={0.1}
+                        step={0.1}
 
-                      value={
-                        environment.maxDumbbellKg === undefined
-                          ? ""
-                          : Math.round(
-                              fromKg(environment.maxDumbbellKg, p.unit) * 10,
-                            ) / 10
-                      }
+                        value={
+                          environment.maxDumbbellKg === undefined
+                            ? ""
+                            : Math.round(
+                                fromKg(environment.maxDumbbellKg, p.unit) * 10,
+                              ) / 10
+                        }
 
-                      onChange={(e) =>
-                        editEquipment({
-                          maxDumbbellKg: e.target.value
-                            ? toKg(Number(e.target.value), p.unit)
-                            : undefined,
-                        })
-                      }
-                    />
-                  </Field>
+                        onChange={(e) =>
+                          editEquipment({
+                            maxDumbbellKg: e.target.value
+                              ? toKg(Number(e.target.value), p.unit)
+                              : undefined,
+                          })
+                        }
+                      />
+                    </Field>
 
-                  <label className="setup-check">
-                    <input
-                      type="checkbox"
+                    <label className="setup-check">
+                      <input
+                        type="checkbox"
 
-                      checked={environment.canIncline}
+                        checked={environment.canIncline}
 
-                      onChange={(e) =>
-                        editEquipment({ canIncline: e.target.checked })
-                      }
-                    />
+                        onChange={(e) =>
+                          editEquipment({ canIncline: e.target.checked })
+                        }
+                      />
 
-                    <span>Bench can incline</span>
-                  </label>
+                      <span>Bench can incline</span>
+                    </label>
                   </fieldset>
 
                   <Field label="Equipment notes (optional)">
@@ -1060,57 +1033,83 @@ export default function Onboarding({ onDone }: { onDone?: () => void }) {
                 </div>
               </dl>
 
-              <Field label="Starter program">
-                <Select
-                  value={preset}
-                  onChange={(event) => setPreset(event.target.value)}
-                >
-                  <option value="automatic">Choose from my preferences</option>
-
-                  {data.programs
-                    .filter((program) => !program.archived)
-                    .map((program) => (
-                      <option key={program.id} value={program.id}>
-                        {program.name}
-                      </option>
-                    ))}
-                </Select>
-              </Field>
-
-              {preset !== "automatic" && (
-                <p className="fine-print">
-                  {data.programs
-                    .find((program) => program.id === preset)
-                    ?.templateIds.map(
-                      (key) =>
-                        data.templates.find((template) => template.id === key)
-                          ?.name,
-                    )
-                    .filter(Boolean)
-                    .join(" · ")}{" "}
-                  · The first workout is scheduled today, with the preset’s
-                  weekly spacing.
+              <fieldset className="preset-onboarding-choice">
+                <legend>Start with matching presets?</legend>
+                <p className="muted">
+                  You can begin with an empty workout library, or add a small
+                  selection that fits your preferences and equipment.
                 </p>
-              )}
-
-              <label className="setup-plan-choice">
-                <input
-                  type="checkbox"
-
-                  checked={makePlan}
-
-                  onChange={(e) => setMakePlan(e.target.checked)}
-                />
-
-                <span>
-                  <strong>Create an editable starter plan</strong>
-
-                  <small>
-                    Two weeks on your selected days, or the chosen preset’s
-                    weekdays. Nothing is added to completed workout history.
-                  </small>
-                </span>
-              </label>
+                <div className="segmented-control">
+                  <button
+                    type="button"
+                    aria-pressed={!addPresets}
+                    className={!addPresets ? "active" : ""}
+                    onClick={() => {
+                      setAddPresets(false);
+                      setMakePlan(false);
+                    }}
+                  >
+                    Start empty
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={addPresets}
+                    className={addPresets ? "active" : ""}
+                    onClick={() => setAddPresets(true)}
+                  >
+                    Add matching presets
+                  </button>
+                </div>
+                {addPresets &&
+                  (() => {
+                    const recommendation = recommendPresets(
+                      p,
+                      environment,
+                      data.exercises,
+                    );
+                    return (
+                      <div className="preset-onboarding-summary">
+                        <p className="fine-print">{recommendation.reason}</p>
+                        <ul>
+                          {recommendation.templates.map((template) => (
+                            <li key={template.id}>
+                              <strong>{template.name}</strong>
+                              <span>
+                                {template.exercises.length} movements · up to{" "}
+                                {template.minutes} min
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                        {!recommendation.templates.length && (
+                          <p className="muted">
+                            No compatible starter workouts match this inventory.
+                            You can create your own after setup.
+                          </p>
+                        )}
+                        <label className="setup-plan-choice">
+                          <input
+                            type="checkbox"
+                            checked={makePlan}
+                            disabled={
+                              !p.days.length || !recommendation.templates.length
+                            }
+                            onChange={(event) =>
+                              setMakePlan(event.target.checked)
+                            }
+                          />
+                          <span>
+                            <strong>Also schedule two starter weeks</strong>
+                            <small>
+                              Optional. Uses your selected training days and
+                              preserves existing plans and history.
+                            </small>
+                          </span>
+                        </label>
+                      </div>
+                    );
+                  })()}
+              </fieldset>
 
               <p className="setup-privacy">
                 <ShieldCheck size={17} /> No account. Your records stay on this

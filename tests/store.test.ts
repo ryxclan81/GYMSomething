@@ -17,7 +17,7 @@ import {
   decodePersistedRecord,
 } from "../src/state/persistence";
 import type { AppData, Goal, ProgramPhase } from "../src/domain/types";
-import { defaultData } from "../src/data/defaults";
+import { starterPresetData as defaultData } from "../src/data/defaults";
 import {
   createSession,
   completeSession,
@@ -515,6 +515,7 @@ describe("Phone local storage and full backups", () => {
     expect(validateBackup(defaultData()).exercises.length).toBeGreaterThan(700);
   });
   it("recovers an active session after reinitializing local storage", async () => {
+    await importBackup(JSON.stringify(defaultData()));
     await updateData((d) => {
       d.activeSession = createSession(d, d.templates[0]);
       d.activeSession.exercises[0].sets[0].reps = 11;
@@ -541,6 +542,7 @@ describe("Phone local storage and full backups", () => {
     expect(saved().profile.name).toBe("C");
   });
   it("keeps template edits separate from session snapshots", async () => {
+    await importBackup(JSON.stringify(defaultData()));
     await updateData((d) => {
       d.activeSession = createSession(d, d.templates[0]);
     });
@@ -554,6 +556,7 @@ describe("Phone local storage and full backups", () => {
     ).toBe(original);
   });
   it("completes a session idempotently and preserves partial sets", async () => {
+    await importBackup(JSON.stringify(defaultData()));
     await updateData((d) => {
       const session = createSession(d, d.templates[0]);
       session.exercises[0].sets[0].completed = true;
@@ -564,6 +567,7 @@ describe("Phone local storage and full backups", () => {
     expect(sessionStats(useApp.getState().data.sessions[0]).sets).toBe(1);
   });
   it("restores a complete JSON export after a data reset", async () => {
+    await importBackup(JSON.stringify(defaultData()));
     await updateData((d) => {
       d.profile.name = "Restored athlete";
       d.profile.nutrition = true;

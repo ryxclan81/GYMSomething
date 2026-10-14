@@ -8,6 +8,11 @@ import type {
   WorkoutSet,
 } from "./types";
 import { id, prescription } from "./helpers";
+import {
+  circuitTargetSet,
+  finishCircuit,
+  validateCircuitTemplate,
+} from "./circuit";
 export function makeSet(p: Prescription, previous?: WorkoutSet): WorkoutSet {
   return {
     id: id(),
@@ -62,7 +67,11 @@ export function createSession(
   template?: Template,
   scheduleId?: string,
 ): Session {
-  return {
+  if (template?.circuit) {
+    const error = validateCircuitTemplate(template, data.exercises);
+    if (error) throw new Error(error);
+  }
+  const session: Session = {
     id: id(),
     name: template?.name ?? "Open workout",
     templateId: template?.id,
@@ -82,6 +91,17 @@ export function createSession(
       }) ?? [],
     notes: "",
   };
+  if (template?.circuit) {
+    session.circuit = {
+      durationSeconds: template.circuit.durationSeconds,
+      elapsedMs: 0,
+      round: 1,
+    };
+    session.exercises.forEach((entry) => {
+      entry.sets = [circuitTargetSet(entry, 1)];
+    });
+  }
+  return session;
 }
 export function validateSet(
   set: WorkoutSet,
@@ -112,6 +132,15 @@ export function validateSet(
   return null;
 }
 export function completeSession(data: AppData, session: Session): boolean {
+  if (
+    session.circuit &&
+    !session.exercises.some((entry) =>
+      entry.sets.some((set) => set.completed && !set.skipped),
+    )
+  )
+    throw new Error("Record at least one circuit movement before saving.");
+  if (session.circuit && !session.completedAt)
+    session.circuit = finishCircuit(session.circuit);
   const existing = data.sessions.findIndex((s) => s.id === session.id);
   if (existing >= 0) {
     data.sessions[existing] = structuredClone(session);

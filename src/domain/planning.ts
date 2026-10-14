@@ -42,9 +42,10 @@ export function programValidation(program: Program): string | null {
   )
     return "Choose a valid start date.";
   if (
-    !Number.isInteger(program.weeks) ||
-    program.weeks < 1 ||
-    program.weeks > 104
+    program.weeks !== undefined &&
+    (!Number.isInteger(program.weeks) ||
+      program.weeks < 1 ||
+      program.weeks > 104)
   )
     return "Choose a block length between 1 and 104 weeks.";
   if (
@@ -58,6 +59,7 @@ export function programValidation(program: Program): string | null {
     program.deloadWeek !== undefined &&
     (!Number.isInteger(program.deloadWeek) ||
       program.deloadWeek < 1 ||
+      program.weeks === undefined ||
       program.deloadWeek > program.weeks)
   )
     return "Choose a lighter week within this block.";
@@ -74,6 +76,7 @@ export function programValidation(program: Program): string | null {
       !Number.isInteger(phase.endWeek) ||
       phase.startWeek < 1 ||
       phase.endWeek < phase.startWeek ||
+      program.weeks === undefined ||
       phase.endWeek > program.weeks
     )
       return `${phase.name}: choose weeks within this block.`;
@@ -115,8 +118,9 @@ export function previewProgram(
       ),
   );
   const entries: PlanningEntry[] = [];
+  const weeks = program.weeks ?? 4;
   let rotation = 0;
-  for (let day = 0; day < program.weeks * 7; day++) {
+  for (let day = 0; day < weeks * 7; day++) {
     const date = addDays(program.startDate, day);
     if (!program.days.includes(parseDate(date).getDay())) continue;
     const blockWeek = Math.floor(day / 7) + 1;
@@ -133,7 +137,7 @@ export function previewProgram(
   }
   return {
     startDate: program.startDate,
-    endDate: addDays(program.startDate, program.weeks * 7 - 1),
+    endDate: addDays(program.startDate, weeks * 7 - 1),
     entries,
     missingTemplateIds,
   };
@@ -248,9 +252,19 @@ function plannedTemplate(
 export function applyProgram(
   data: AppData,
   program: Program,
-  { mode = "keep" }: { mode?: ApplyMode } = {},
+  {
+    mode = "keep",
+    scheduleWeeks,
+  }: { mode?: ApplyMode; scheduleWeeks?: number } = {},
 ) {
-  const preview = previewProgram(program, data.templates);
+  const error = programValidation(program);
+  if (error) throw new Error(error);
+  // The reviewed calendar horizon is independent of the saved rotation.
+  const scheduledProgram =
+    scheduleWeeks === undefined
+      ? program
+      : { ...program, weeks: scheduleWeeks };
+  const preview = previewProgram(scheduledProgram, data.templates);
   if (preview.missingTemplateIds.length)
     throw new Error(
       "This program includes archived or missing workouts. Edit its rotation before applying it.",

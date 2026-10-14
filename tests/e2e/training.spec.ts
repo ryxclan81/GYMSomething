@@ -59,17 +59,23 @@ test("program scheduling creates lighter-session copies and applying again is id
   await navigate(page, "Plan");
   await page.getByRole("button", { name: "Programs", exact: true }).click();
   await page.getByRole("button", { name: "New program", exact: true }).click();
-  let dialog = page.getByRole("dialog", { name: "New training block" });
+  let dialog = page.getByRole("dialog", { name: "New program" });
   await formControl(dialog, "Program name").fill("Four Week Focus");
-  await choose(formControl(dialog, "Block length"), "4 weeks", true);
+  await choose(
+    formControl(dialog, "Schedule length (optional)"),
+    "4 weeks",
+    true,
+  );
   await choose(formControl(dialog, "Planned lighter week"), "Week 4", true);
   await dialog
     .locator("label.list-row")
     .filter({ hasText: "Full Body A" })
     .getByRole("checkbox")
     .check();
-  await formControl(dialog, "Add this block to my calendar").check();
-  await dialog.getByRole("button", { name: "Save block", exact: true }).click();
+  await formControl(dialog, "Also schedule dates now").check();
+  await dialog
+    .getByRole("button", { name: "Save program", exact: true })
+    .click();
   await expect(dialog).not.toBeVisible();
   const initial = await persisted(page);
   const program = initial.programs.find((p) => p.name === "Four Week Focus")!;
@@ -86,9 +92,11 @@ test("program scheduling creates lighter-session copies and applying again is id
   await page
     .getByRole("button", { name: "Edit Four Week Focus", exact: true })
     .click();
-  dialog = page.getByRole("dialog", { name: "Edit training block" });
-  await formControl(dialog, "Add this block to my calendar").check();
-  await dialog.getByRole("button", { name: "Save block", exact: true }).click();
+  dialog = page.getByRole("dialog", { name: "Edit program" });
+  await formControl(dialog, "Also schedule dates now").check();
+  await dialog
+    .getByRole("button", { name: "Save program", exact: true })
+    .click();
   await expect(dialog).not.toBeVisible();
   expect((await persisted(page)).schedule.length).toBe(initial.schedule.length);
 });
@@ -258,7 +266,7 @@ test("pound conversions and timed zero-repetition rules do not block template sa
   template.exercises[0].weightKg = 50;
   await writeData(page, data);
   await navigate(page, "Plan");
-  await page.getByRole("button", { name: "Workouts", exact: true }).click();
+  await page.locator(".plan-page .segmented-control").getByRole("button", { name: "Workouts", exact: true }).click();
   await page
     .locator(".template-row")
     .filter({ hasText: "Full Body A" })
@@ -290,10 +298,7 @@ test("a custom exercise created inside the active-workout picker can be logged a
   page,
 }) => {
   await onboard(page);
-  await navigate(page, "Train");
-  await page
-    .getByRole("button", { name: "Workout library", exact: true })
-    .click();
+  await navigate(page, "Workouts");
   await page.getByRole("button", { name: "Start", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Open workout", exact: true }),
@@ -380,10 +385,7 @@ test("workout overview opens a persistent focused exercise and preserves clearab
   page,
 }) => {
   await onboard(page);
-  await navigate(page, "Train");
-  await page
-    .getByRole("button", { name: "Workout library", exact: true })
-    .click();
+  await navigate(page, "Workouts");
   await page
     .locator(".template-card")
     .filter({ hasText: "Full Body A" })
@@ -544,7 +546,7 @@ test("workout overview opens a persistent focused exercise and preserves clearab
     .click();
   await page.getByRole("button", { name: "Save workout", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Let’s train.", exact: true }),
+    page.getByRole("heading", { name: /Good / }),
   ).toBeVisible();
   await page
     .getByRole("button", { name: "Review saved workout", exact: true })
@@ -580,10 +582,7 @@ test("workout overview and focused logging fit phone and desktop screens with ac
   page,
 }) => {
   await onboard(page);
-  await navigate(page, "Train");
-  await page
-    .getByRole("button", { name: "Workout library", exact: true })
-    .click();
+  await navigate(page, "Workouts");
   await page
     .locator(".template-card")
     .filter({ hasText: "Full Body A" })
@@ -644,10 +643,7 @@ test("focused workout keeps navigation reachable with larger text, landscape and
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await onboard(page);
-  await navigate(page, "Train");
-  await page
-    .getByRole("button", { name: "Workout library", exact: true })
-    .click();
+  await navigate(page, "Workouts");
   await page
     .locator(".template-card")
     .filter({ hasText: "Full Body A" })
@@ -736,9 +732,9 @@ test("training screens remain usable across mobile and desktop with accessible c
     });
     for (const screen of ["Plan", "Progress", "Library"]) {
       if (screen === "Library") {
-        await nav.getByRole("button", { name: "Train", exact: true }).click();
+        await nav.getByRole("button", { name: "Workouts", exact: true }).click();
         await expect(
-          page.getByRole("heading", { name: /Let’s train/ }),
+          page.getByRole("heading", { name: "Your workouts.", exact: true }),
         ).toBeVisible();
         await page
           .getByRole("button", { name: "Exercise library", exact: true })

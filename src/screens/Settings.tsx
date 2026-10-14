@@ -1,4 +1,4 @@
-import { HelpToggle } from "../components/Help";
+import { HelpButton, HelpTip } from "../components/Help";
 import { Select, NumericInput } from "../components/inputs";
 import { useState, type FormEvent } from "react";
 import {
@@ -98,29 +98,37 @@ function Toggle({
   onChange: (value: boolean) => void;
 }) {
   return (
-    <label className="list-row">
-      <div>
-        <strong>{label}</strong>
-        {description && <p className="muted">{description}</p>}
-      </div>
-      <input
-        type="checkbox"
-        className="toggle"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
+    <div className="list-row settings-toggle-row">
+      <label className="settings-toggle-label">
+        <div>
+          <strong>{label}</strong>
+          {description && <p className="muted">{description}</p>}
+        </div>
+        <input
+          type="checkbox"
+          className="toggle"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+        />
+      </label>
+      <HelpTip
+        label={label}
+        description={`${description ?? label} This setting is optional and saves on this device. Turning it off keeps your recorded history.`}
       />
-    </label>
+    </div>
   );
 }
 export default function Settings({
   onBack,
   onNutrition,
+  initialPane,
 }: {
   onBack: () => void;
   onNutrition: () => void;
+  initialPane?: "equipment";
 }) {
   const { data } = useApp();
-  const [pane, setPane] = useState<Pane>(null);
+  const [pane, setPane] = useState<Pane>(initialPane ?? null);
   const [equipment, setEquipment] = useState<EquipmentProfile | null>(null);
   const feature = (
     key:
@@ -188,7 +196,7 @@ export default function Settings({
           <h1>Settings</h1>
           <p className="muted">Make Setwise fit the way you train.</p>
         </div>
-        <HelpToggle />
+        <HelpButton helpTitle="Settings" />
       </header>
       <section
         className="settings-profile-summary"
@@ -290,7 +298,7 @@ export default function Settings({
         />
       </section>
       <section className="section">
-        <p className="eyebrow">Setwise 1.4.1</p>
+        <p className="eyebrow">Setwise 1.5.0</p>
         <p className="muted">
           Dark mode. No account required. Motion follows your device’s
           reduced-motion setting. Optional tools never remove saved records when
@@ -345,7 +353,7 @@ export default function Settings({
         <Sheet title="Equipment environments" onClose={() => setPane(null)}>
           <p className="muted">
             Switch environments without rewriting your workout history. Review
-            substitutions in Train.
+            substitutions before starting a workout.
           </p>
           <div className="stack">
             {data.equipment.map((e) => (
@@ -364,6 +372,7 @@ export default function Settings({
                 </button>
                 <Button
                   variant="secondary"
+                  className="equipment-environment-edit"
                   onClick={() => setEquipment({ ...e, items: [...e.items] })}
                 >
                   Edit
@@ -697,7 +706,7 @@ function ProfileEditor({
               ["volume", "Set / volume progression"],
               ["rir", "RIR guided"],
               ["rpe", "RPE guided"],
-              ["percentage", "Percentage increase"],
+              ["percentage", "Percentage of estimated 1RM"],
               ["manual", "Manual"],
               ["review", "Periodic review"],
               ["skill", "Skill milestone"],
@@ -804,7 +813,10 @@ function EquipmentEditor({
           bodyweight exercises.
         </p>
         <EquipmentInventory
-          options={data.exercises.flatMap((x) => x.equipment)}
+          options={[
+            ...data.exercises.flatMap((x) => x.equipment),
+            ...data.equipment.flatMap((environment) => environment.items),
+          ]}
           items={e.items}
           onChange={(items) => setE({ ...e, items })}
         />

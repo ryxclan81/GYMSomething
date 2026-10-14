@@ -19,7 +19,7 @@ async function nav(page: Page, name: string) {
     .click();
 }
 async function openWorkoutWithPushups(page: Page) {
-  await nav(page, "Train");
+  await nav(page, "Workouts");
   await page.getByRole("button", { name: "Start", exact: true }).click();
   await page.getByRole("button", { name: "Add exercise", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Add an exercise" });
@@ -37,9 +37,7 @@ async function finishWorkout(page: Page) {
     .getByRole("button", { name: "Finish workout", exact: true })
     .click();
   await page.getByRole("button", { name: "Save workout", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "Let’s train.", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Good / })).toBeVisible();
   await page
     .getByRole("button", { name: "Review saved workout", exact: true })
     .click();
@@ -119,7 +117,7 @@ test("home environment shows compatible substitutions and never transfers loads"
 }) => {
   await onboard(page);
   await page
-    .locator(".home-page")
+    .locator(".app-header")
     .getByRole("button", {
       name: "Training equipment: Commercial Gym",
       exact: true,
@@ -128,10 +126,7 @@ test("home environment shows compatible substitutions and never transfers loads"
   await page
     .getByRole("button", { name: /Home Essentials.*equipment types/ })
     .click();
-  await nav(page, "Train");
-  await page
-    .getByRole("button", { name: "Workout library", exact: true })
-    .click();
+  await nav(page, "Workouts");
   await page.getByRole("button", { name: "Adapt & start" }).first().click();
   const dialog = page.getByRole("dialog", { name: "Make this workout yours" });
   await expect(dialog).toBeVisible();
@@ -165,7 +160,7 @@ test("custom exercise works in templates, tracking and history", async ({
   page,
 }) => {
   await onboard(page);
-  await nav(page, "Train");
+  await nav(page, "Workouts");
   await page.getByRole("button", { name: "Exercise library" }).click();
   await page.getByRole("button", { name: "Create custom exercise" }).click();
   await formControl(page, "Name", { exact: true }).fill("Alex floor press");
@@ -385,9 +380,9 @@ test("responsive screens have no overflow, accessible controls and no default AI
       nodes: v.nodes.map((n) => n.target),
     })),
   ).toEqual([]);
-  await nav(page, "Train");
+  await nav(page, "Workouts");
   await expect(
-    page.getByRole("heading", { name: "Let’s train." }),
+    page.getByRole("heading", { name: "Your workouts." }),
   ).toBeVisible();
   await page.screenshot({
     path: "artifacts/screenshots/train-mobile.png",

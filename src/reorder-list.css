@@ -1,0 +1,100 @@
+.reorder-list {
+  display: grid;
+  gap: 12px;
+}
+
+.reorder-item {
+  min-width: 0;
+  border-radius: 12px;
+}
+
+.reorder-item-dragging {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  background: var(--surface-2);
+}
+
+.reorder-controls {
+  position: relative;
+  flex: 0 0 44px;
+  align-self: flex-start;
+}
+
+.reorder-handle.icon-btn {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 10px;
+  color: var(--muted);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.reorder-handle.icon-btn:active {
+  cursor: grabbing;
+}
+
+.reorder-handle.icon-btn:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+
+.reorder-handle.icon-btn[aria-expanded="true"] {
+  color: var(--accent);
+  background: var(--surface-2);
+}
+
+.reorder-move-menu {
+  position: absolute;
+  z-index: 12;
+  top: calc(100% + 4px);
+  left: 0;
+  display: grid;
+  width: max-content;
+  min-width: 164px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 30%);
+}
+
+.reorder-move-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.875rem;
+  text-align: left;
+}
+
+.reorder-move-menu button:hover,
+.reorder-move-menu button:focus-visible {
+  background: var(--surface-2);
+}
+
+.reorder-move-menu button:disabled {
+  color: var(--muted);
+  opacity: 0.45;
+}
+
+.reorder-list-area .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

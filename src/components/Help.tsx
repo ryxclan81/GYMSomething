@@ -13,6 +13,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { CircleHelp, X } from "lucide-react";
+import { screenHelpDescription } from "../data/screenHelp";
 import {
   describeHelpControl,
   helpTopics,
@@ -38,7 +39,15 @@ function controlFromTarget(target: EventTarget | null): HTMLElement | null {
   const element = elementFromTarget(target);
   if (!element || element.closest(CHROME_SELECTOR)) return null;
   const direct = element.closest<HTMLElement>(CONTROL_SELECTOR);
-  if (direct) return direct;
+  if (direct) {
+    if (
+      direct.querySelector(
+        ".lucide-circle-help,.lucide-circle-question-mark,.lucide-info",
+      )
+    )
+      return null;
+    return direct;
+  }
   // Clicking the label of a native checkbox also activates that checkbox.
   const label = element.closest("label");
   return (
@@ -141,9 +150,6 @@ interface ActiveHelp {
   pinned: boolean;
 }
 interface HelpContextValue {
-  explaining: boolean;
-  setExplaining: (enabled: boolean) => void;
-  toggleHelp: (source?: HTMLElement) => void;
   showHelp: (source: HTMLElement, options?: ShowOptions) => void;
   dismissHelp: (restoreFocus?: boolean) => void;
 }
@@ -171,10 +177,8 @@ function block(event: Event) {
 
 export function HelpProvider({ children }: { children: ReactNode }) {
   const tooltipId = `setwise-help-${useId().replace(/:/g, "")}`;
-  const [explaining, setMode] = useState(false);
   const [active, setActive] = useState<ActiveHelp | null>(null);
   const activeRef = useRef<ActiveHelp | null>(null);
-  const modeRef = useRef(false);
   const keyboardRef = useRef(false);
   const suppressFocus = useRef<HTMLElement | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
@@ -251,7 +255,7 @@ export function HelpProvider({ children }: { children: ReactNode }) {
         host:
           source.closest<HTMLDialogElement>("dialog[open]") ?? document.body,
         description,
-        pinned: options.pinned ?? modeRef.current,
+        pinned: options.pinned ?? false,
       };
       const ids = new Set(
         (source.getAttribute("aria-describedby") ?? "")
@@ -266,24 +270,6 @@ export function HelpProvider({ children }: { children: ReactNode }) {
     [cancelClose, cancelHover, tooltipId],
   );
 
-  const setExplaining = useCallback(
-    (enabled: boolean) => {
-      modeRef.current = enabled;
-      setMode(enabled);
-      if (!enabled) dismissHelp();
-    },
-    [dismissHelp],
-  );
-
-  const toggleHelp = useCallback(
-    (source?: HTMLElement) => {
-      const next = !modeRef.current;
-      setExplaining(next);
-      if (next && source) showHelp(source, { topic: "help", pinned: true });
-    },
-    [setExplaining, showHelp],
-  );
-
   useEffect(() => {
     const scheduleClose = () => {
       cancelClose();
@@ -294,24 +280,10 @@ export function HelpProvider({ children }: { children: ReactNode }) {
     const onPointerDown = (event: PointerEvent) => {
       keyboardRef.current = false;
       const control = controlFromTarget(event.target);
-      if (modeRef.current && control) {
-        block(event);
-        showHelp(control, { pinned: true });
-      } else if (control && !activeRef.current?.pinned) {
-        // A normal touch/mouse field interaction should leave space for typing.
-        dismissHelp();
-      }
-    };
-    const onClick = (event: MouseEvent) => {
-      if (!modeRef.current) return;
-      const control = controlFromTarget(event.target);
-      if (control) {
-        block(event);
-        showHelp(control, { pinned: true });
-      }
+      if (control) dismissHelp();
     };
     const onPointerOver = (event: PointerEvent) => {
-      if (modeRef.current || event.pointerType !== "mouse") return;
+      if (event.pointerType !== "mouse") return;
       const control = controlFromTarget(event.target);
       if (
         !control ||
@@ -328,7 +300,6 @@ export function HelpProvider({ children }: { children: ReactNode }) {
         if (
           hoverSource.current === control &&
           control.isConnected &&
-          !modeRef.current &&
           !activeRef.current?.pinned
         )
           showHelp(control, { pinned: false });
@@ -368,7 +339,7 @@ export function HelpProvider({ children }: { children: ReactNode }) {
         suppressFocus.current = null;
         return;
       }
-      if (modeRef.current || keyboardRef.current) showHelp(control);
+      if (keyboardRef.current) showHelp(control);
     };
     const onBlur = (event: FocusEvent) => {
       if (
@@ -379,13 +350,10 @@ export function HelpProvider({ children }: { children: ReactNode }) {
     };
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (activeRef.current) {
+        if (activeRef.current?.pinned) {
           block(event);
           dismissHelp(true);
-        } else if (modeRef.current) {
-          block(event);
-          setExplaining(false);
-        }
+        } else dismissHelp();
         return;
       }
       if (event.key === "Tab") {
@@ -397,64 +365,37 @@ export function HelpProvider({ children }: { children: ReactNode }) {
       const editable = control.matches(
         "input,textarea,select,[role='combobox'],[role='option'],[role='checkbox'],[role='switch']",
       );
-      if (modeRef.current && (editable || ["Enter", " "].includes(event.key))) {
-        block(event);
-        showHelp(control, { pinned: true });
-      } else if (
-        !modeRef.current &&
+      if (
         editable &&
         !activeRef.current?.pinned &&
         (event.key.length === 1 || ["Backspace", "Delete"].includes(event.key))
       )
         dismissHelp();
     };
-    const onEdit = (event: Event) => {
-      if (!modeRef.current) return;
-      const control = controlFromTarget(event.target);
-      if (control) {
-        block(event);
-        showHelp(control, { pinned: true });
-      }
-    };
     const onScroll = () => {
       if (!activeRef.current?.pinned) dismissHelp();
     };
     document.addEventListener("pointerdown", onPointerDown, true);
-    document.addEventListener("click", onClick, true);
     document.addEventListener("pointerover", onPointerOver, true);
     document.addEventListener("pointerout", onPointerOut, true);
     document.addEventListener("focusin", onFocus, true);
     document.addEventListener("focusout", onBlur, true);
     document.addEventListener("keydown", onKey, true);
-    document.addEventListener("beforeinput", onEdit, true);
-    document.addEventListener("paste", onEdit, true);
-    document.addEventListener("drop", onEdit, true);
     document.addEventListener("scroll", onScroll, true);
     return () => {
       document.removeEventListener("pointerdown", onPointerDown, true);
-      document.removeEventListener("click", onClick, true);
       document.removeEventListener("pointerover", onPointerOver, true);
       document.removeEventListener("pointerout", onPointerOut, true);
       document.removeEventListener("focusin", onFocus, true);
       document.removeEventListener("focusout", onBlur, true);
       document.removeEventListener("keydown", onKey, true);
-      document.removeEventListener("beforeinput", onEdit, true);
-      document.removeEventListener("paste", onEdit, true);
-      document.removeEventListener("drop", onEdit, true);
       document.removeEventListener("scroll", onScroll, true);
       cancelClose();
       cancelHover();
       if (activeRef.current)
         removeDescription(activeRef.current.source, tooltipId);
     };
-  }, [
-    cancelClose,
-    cancelHover,
-    dismissHelp,
-    setExplaining,
-    showHelp,
-    tooltipId,
-  ]);
+  }, [cancelClose, cancelHover, dismissHelp, showHelp, tooltipId]);
 
   useLayoutEffect(() => {
     if (!active) return;
@@ -554,9 +495,7 @@ export function HelpProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <HelpContext.Provider
-      value={{ explaining, setExplaining, toggleHelp, showHelp, dismissHelp }}
-    >
+    <HelpContext.Provider value={{ showHelp, dismissHelp }}>
       {children}
       {active &&
         createPortal(
@@ -618,12 +557,10 @@ export function HelpProvider({ children }: { children: ReactNode }) {
                   <button
                     type="button"
                     className="btn secondary"
-                    onClick={() =>
-                      explaining ? setExplaining(false) : dismissHelp(true)
-                    }
+                    onClick={() => dismissHelp(true)}
                     style={{ minHeight: 44, width: "100%" }}
                   >
-                    {explaining ? "Exit help mode" : "Got it"}
+                    Got it
                   </button>
                 </div>
               )}
@@ -635,12 +572,17 @@ export function HelpProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function HelpToggle({
+/** Opens a local explanation without changing how other controls behave. */
+export function HelpButton({
   className = "btn secondary",
   compact = false,
+  helpTitle = "this view",
+  description,
   ...props
 }: Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onClick"> & {
   compact?: boolean;
+  helpTitle?: string;
+  description?: string;
 }) {
   const help = useHelp();
   if (!help) return null;
@@ -648,14 +590,20 @@ export function HelpToggle({
     <button
       {...props}
       type="button"
-      className={`help-toggle ${className}`}
+      className={`help-button ${className}`}
       data-help-ignore="true"
-      aria-pressed={help.explaining}
-      aria-label={help.explaining ? "Exit help mode" : "Explain controls"}
-      onClick={(event) => help.toggleHelp(event.currentTarget)}
+      aria-label={`About ${helpTitle}`}
+      onClick={(event) =>
+        help.showHelp(event.currentTarget, {
+          label: `About ${helpTitle}`,
+          description: description ?? screenHelpDescription(helpTitle),
+          pinned: true,
+          kind: "term",
+        })
+      }
     >
       <CircleHelp size={18} aria-hidden="true" />
-      {!compact && <span>{help.explaining ? "Exit Help" : "Help"}</span>}
+      {!compact && <span>Help</span>}
     </button>
   );
 }
@@ -710,10 +658,6 @@ export function HelpTip({
         borderRadius: 8,
         flexShrink: 0,
       }}
-      onPointerEnter={(event) => {
-        if (event.pointerType === "mouse") show(event.currentTarget, false);
-      }}
-      onFocus={(event) => show(event.currentTarget, false)}
       onClick={(event) => show(event.currentTarget, true)}
     >
       <CircleHelp size={17} aria-hidden="true" />

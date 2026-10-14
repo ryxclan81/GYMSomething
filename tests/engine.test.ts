@@ -16,7 +16,7 @@ import {
   weeklyStreak,
   volumeLoad,
 } from "../src/domain/engine";
-import { defaultData, defaultRule } from "../src/data/defaults";
+import { starterPresetData as defaultData, defaultRule } from "../src/data/defaults";
 import { starterExercises } from "../src/data/exercises";
 import type {
   Exercise,

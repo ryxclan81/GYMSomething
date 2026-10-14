@@ -12,6 +12,7 @@ import {
 } from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
+import { selectOptionHelp } from "../domain/optionHelp";
 
 type NumericProps = Omit<
   InputHTMLAttributes<HTMLInputElement>,
@@ -69,6 +70,7 @@ export interface SelectOption {
   value: string;
   label: string;
   disabled?: boolean;
+  description?: string;
 }
 type SelectProps = Omit<
   SelectHTMLAttributes<HTMLSelectElement>,
@@ -99,6 +101,7 @@ function collectOptions(children: ReactNode): SelectOption[] {
         value?: string | number;
         children?: ReactNode;
         disabled?: boolean;
+        "data-help"?: string;
       }>(child)
     )
       return [];
@@ -111,6 +114,7 @@ function collectOptions(children: ReactNode): SelectOption[] {
         value: String(child.props.value ?? label),
         label,
         disabled: child.props.disabled,
+        description: child.props["data-help"],
       },
     ];
   });
@@ -141,6 +145,14 @@ export function Select({
   const selected = String(value ?? internalValue);
   const label = props["aria-label"];
   const container = trigger.current?.closest("dialog") ?? undefined;
+  const fieldElement = trigger.current?.closest(".field,label");
+  const fieldName =
+    label ??
+    fieldElement
+      ?.querySelector("label,[data-field-label]")
+      ?.textContent?.trim() ??
+    fieldElement?.textContent?.trim() ??
+    "";
   return (
     <SelectPrimitive.Root
       value={selected === "" ? EMPTY : selected}
@@ -187,22 +199,30 @@ export function Select({
             <ChevronUp size={16} />
           </SelectPrimitive.ScrollUpButton>
           <SelectPrimitive.Viewport className="forma-select-options">
-            {choices.map((option) => (
-              <SelectPrimitive.Item
-                className="forma-select-option"
-                data-value={option.value === "" ? EMPTY : option.value}
-                value={option.value === "" ? EMPTY : option.value}
-                key={option.value}
-                disabled={option.disabled}
-              >
-                <SelectPrimitive.ItemText>
-                  {option.label}
-                </SelectPrimitive.ItemText>
-                <SelectPrimitive.ItemIndicator>
-                  <Check size={17} aria-hidden="true" />
-                </SelectPrimitive.ItemIndicator>
-              </SelectPrimitive.Item>
-            ))}
+            {choices.map((option) => {
+              const explanation =
+                option.description ??
+                selectOptionHelp(option.label, option.value, fieldName);
+              return (
+                <SelectPrimitive.Item
+                  className="forma-select-option"
+                  data-value={option.value === "" ? EMPTY : option.value}
+                  value={option.value === "" ? EMPTY : option.value}
+                  key={option.value}
+                  disabled={option.disabled}
+                  data-help={explanation}
+                  data-help-label={option.label}
+                  data-help-ignore={explanation ? undefined : "true"}
+                >
+                  <SelectPrimitive.ItemText>
+                    {option.label}
+                  </SelectPrimitive.ItemText>
+                  <SelectPrimitive.ItemIndicator>
+                    <Check size={17} aria-hidden="true" />
+                  </SelectPrimitive.ItemIndicator>
+                </SelectPrimitive.Item>
+              );
+            })}
           </SelectPrimitive.Viewport>
           <SelectPrimitive.ScrollDownButton className="forma-select-scroll">
             <ChevronDown size={16} />

@@ -4,6 +4,7 @@ import type { AppData } from "../domain/types";
 import { defaultData } from "../data/defaults";
 import { validateAIEndpoint } from "../integrations/ai";
 import { workoutIconIds } from "../domain/workoutIcons";
+import { pauseCircuit } from "../domain/circuit";
 import {
   STORAGE_KEY,
   encodePersistedData,
@@ -379,6 +380,7 @@ const workoutSet = z
     rir: z.number().min(0).max(10).optional(),
     rpe: z.number().min(0).max(10).optional(),
     completedAt: timestamp.optional(),
+    circuitRound: z.number().int().min(1).max(10000).optional(),
   })
   .passthrough();
 const session = z
@@ -391,6 +393,15 @@ const session = z
     restEndsAt: positive.optional(),
     restPausedSeconds: positive.optional(),
     focusedExerciseId: uid.optional(),
+    circuit: z
+      .object({
+        durationSeconds: z.number().finite().min(1).max(86400),
+        elapsedMs: positive,
+        startedAt: positive.optional(),
+        finishedAt: positive.optional(),
+        round: z.number().int().min(1).max(10000),
+      })
+      .optional(),
     setTimer: z
       .object({
         exerciseId: uid,
@@ -494,6 +505,9 @@ export const backupSchema = z
           exercises: z.array(prescription),
           updatedAt: timestamp,
           icon: z.enum(workoutIconIds).optional(),
+          circuit: z
+            .object({ durationSeconds: z.number().finite().min(1).max(86400) })
+            .optional(),
           planningSource: z
             .object({
               programId: uid,
@@ -513,7 +527,7 @@ export const backupSchema = z
           id: uid,
           name: text,
           description: text,
-          weeks: z.number().int().min(1).max(104),
+          weeks: z.number().int().min(1).max(104).optional(),
           startDate: calendarDate,
           templateIds: z.array(uid),
           days: weekdays,
@@ -523,7 +537,9 @@ export const backupSchema = z
         })
         .refine(
           (program) =>
-            !program.deloadWeek || program.deloadWeek <= program.weeks,
+            !program.deloadWeek ||
+            (program.weeks !== undefined &&
+              program.deloadWeek <= program.weeks),
           "Lighter week must be within the program",
         )
         .refine((program) => {
@@ -533,6 +549,7 @@ export const backupSchema = z
           return (
             phases.every(
               (phase, index) =>
+                program.weeks !== undefined &&
                 phase.endWeek <= program.weeks &&
                 (!index || phase.startWeek > phases[index - 1].endWeek),
             ) && new Set(phases.map((phase) => phase.id)).size === phases.length
@@ -781,6 +798,28 @@ export function validateBackup(value: unknown): AppData {
         targetSet.skipped
       )
         delete s.setTimer;
+    }
+    if (s.circuit) {
+      if (
+        s.circuit.finishedAt !== undefined &&
+        s.circuit.startedAt !== undefined
+      )
+        throw new Error("A finished circuit clock cannot also be running.");
+      if (s.completedAt && s.circuit.startedAt !== undefined)
+        s.circuit = pauseCircuit(s.circuit, Date.parse(s.completedAt));
+      if (
+        s.exercises.some(
+          (entry) =>
+            entry.sets.some(
+              (set) =>
+                set.circuitRound === undefined ||
+                set.circuitRound > s.circuit!.round,
+            ) ||
+            new Set(entry.sets.map((set) => set.circuitRound)).size !==
+              entry.sets.length,
+        )
+      )
+        throw new Error("A circuit movement has an invalid round.");
     }
     if (
       !Number.isFinite(Date.parse(s.startedAt)) ||

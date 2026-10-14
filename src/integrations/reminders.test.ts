@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { defaultData } from "../data/defaults";
+import { starterPresetData as defaultData } from "../data/defaults";
 import { inAppReminder, reminderDue, remindersICS } from "./reminders";
 describe("reminder timing", () => {
   it("honors enabled days, local time and overnight quiet hours", () => {

@@ -1,6 +1,6 @@
 # Setwise visual system
 
-Setwise uses dark evergreen surfaces, a quiet sage accent and a training-journal hierarchy. The 1.4.0 refinement adds a dedicated welcome entry, slimmer phone chrome and clearer workout management while keeping the selected day's workouts ahead of summary graphics. The logo is an original inline geometric mark and wordmark. The product uses system typography, Lucide icons and consistent workout glyphs; it contains no copied WHOOP branding, screens or imagery.
+Setwise uses dark evergreen surfaces, a quiet sage accent and a training-journal hierarchy. The 1.5.0 refinement adds clearer navigation, local help, opt-in presets, drag reordering and timed circuits while keeping the selected day's workouts ahead of summary graphics. The logo is an original inline geometric mark and wordmark. The product uses system typography, Lucide icons and consistent workout glyphs; it contains no copied WHOOP branding, screens or imagery.
 
 ## Tokens
 
@@ -27,11 +27,11 @@ The font stack is `-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`. T
 
 ## Layout and navigation
 
-On mobile, Home, Train, Plan, Progress and Nutrition occupy a real bottom-navigation layout row. The shell uses the dynamic viewport height; `.app-content` scrolls in the remaining space with `min-height: 0`, so content cannot sit beneath the navigation. The header is limited to the logo and Settings. Equipment selection is available in context on Home/Train, and Help mode remains available in Settings, sheets and focused logging.
+On mobile, Home, Workouts, Plan, Progress and Nutrition occupy a real bottom-navigation layout row. The shell uses the dynamic viewport height; `.app-content` scrolls in the remaining space with `min-height: 0`, so content cannot sit beneath the navigation. The phone header contains the Home logo, a 44px equipment icon and Settings. Selected mobile navigation uses a stronger icon, bold underlined label and aria-current, without a filled highlight; desktop navigation retains its highlight without a dot. Help icons open explanations for their own fields or views, with no global mode.
 
 New users first see Welcome with **Get started**, a labeled example set log and a concise explanation of optional setup and local records. The CTA opens the existing optional setup stages. Returning completed profiles open their saved app directly.
 
-Home's week strip selects a date and lists all its scheduled workouts, with Start, Resume, Review or Skipped states. Empty days and rest days give a clear planning action. Upcoming dates remain directly selectable. Train opens **Today**, with a separate **Workout library** and unscheduled workout action. The weekly summary follows the day's work on mobile and occupies a supporting column on wide screens.
+Home's week strip selects a date and lists all its scheduled workouts, with Start, Resume, Review or Skipped states. Empty days and rest days give a clear planning action. Upcoming dates remain directly selectable. Workouts is the reusable library for unscheduled starts. Home and Plan calendars support horizontal phone swipes, with previous/next buttons as alternatives. The weekly summary follows the day's work on mobile and occupies a supporting column on wide screens.
 
 Nutrition remains discoverable while disabled and asks for explicit enablement. Calories stay inside that module. Desktop equipment switching remains in the header; Settings stays available on every normal app screen. AI appears only when enabled. Desktop uses a left rail and centered content. Focused workout mode gives the selected exercise the app viewport and hides the normal shell navigation, with a clear **All exercises** return action.
 
@@ -52,7 +52,7 @@ The viewport includes `viewport-fit=cover`. Navigation/sheets incorporate iPhone
 
 Form inputs and main buttons generally have a minimum height of 46 px. Some secondary filter chips are smaller; passing an accessibility check does not imply every control exceeds the same touch-size target. Visible keyboard focus uses a 2 px accent outline with spacing. Native inputs and Radix choices retain keyboard/screen-reader semantics; physical Safari/VoiceOver behavior needs separate validation.
 
-Onboarding presents five stages—basics, rhythm, equipment, optional tools and review—with **Use defaults** / **Skip for now** actions. Optional measurements, experience/goals, training preferences, limitations and inventory details are visible in labeled groups. The form body scrolls, resets its scroll position between steps, and retains a visible Continue/Back/defaults footer. Review exposes the workout preset and optional starter calendar choice. Saved profile/equipment choices remain editable in Settings.
+Onboarding presents five stages—basics, rhythm, equipment, optional tools and review—with **Use defaults** / **Skip for now** actions. Optional measurements, experience/goals, training preferences, limitations and inventory details are visible in labeled groups. The form body scrolls, resets its scroll position between steps, and retains a visible Continue/Back/defaults footer. Review defaults to Start empty and explicitly offers Add matching presets; that choice can also create an optional two-week calendar. Saved profile/equipment choices remain editable in Settings.
 
 Program application has a date preview, first-workout alignment option and a clear choice to keep existing plans or replace only unstarted entries. Optional phase controls group week ranges with rep/set/load targets. This makes the calendar effect reviewable before saving.
 
@@ -62,7 +62,7 @@ Program cards have 24px padding and 18px separation; the smallest phones use 18p
 
 Every starter workout uses a distinct appropriate glyph. A compact selected-icon control opens a 22-glyph library covering lifting, muscle groups, bodyweight, cardio, mobility, recovery and home training. Glyphs share rounded strokes; choices use labeled native buttons with `aria-pressed`, visible focus, live selection feedback and touch targets of at least 44px. Icons supplement actual muscle labels rather than replacing them. Old backups without an icon infer a useful default by starter ID or focus.
 
-Plan and Train libraries default to **Recently saved**; name, focus and duration are explicit alternative sorts. New workouts, duplicates and shortened versions appear at the top of the default order. Sorting returns a separate list and preserves the original order when timestamps tie.
+Plan and Workouts libraries default to **Recently saved**; name, focus and duration are explicit alternative sorts. New workouts, duplicates and shortened versions appear at the top of the default order. Sorting returns a separate list and preserves the original order when timestamps tie.
 
 **Delete workout** opens a concrete impact review and a cancel action. Confirmation removes the template record, unstarted planned/skipped calendar entries and program references. Saved sessions and the active workout keep their exercise/set snapshots; linked calendar entries resolve their title from the session after the template is removed. A completed calendar record without a recoverable session prevents deletion and explains the alternatives. Independently frozen phase copies remain saved workouts. Archive remains a separate reversible option.
 
@@ -72,9 +72,9 @@ Today's overview lists each movement's primary/secondary muscles, planned sets/r
 
 Stored load conventions are labeled beside targets (per dumbbell, total, added load, machine stack or assistance). Cardio shows editable minutes/km while persisted duration remains seconds; isometric holds use seconds. Completion uses check states with accessible pressed labels. Warm-up/skipped states remain visible rather than disappearing from history. Prior performance stays secondary to current inputs.
 
-The rest timer uses a large readable countdown plus start/pause/reset and ±30 second actions. A timestamp drives elapsed time. Haptic feedback is attempted only where supported; the PWA does not claim guaranteed iPhone vibration or background alert delivery. Group names support superset/circuit organization without hiding the underlying exercises/sets.
+The rest timer uses a large readable countdown plus start/pause/reset and ±30 second actions. A timestamp drives elapsed time. Haptic feedback is attempted only where supported; the PWA does not claim guaranteed iPhone vibration or background alert delivery. Group names retain normal set-based organization. A separate Timed circuit format repeats per-movement targets for a chosen time limit, with persistent start/pause/resume/reset and explicit full or partial round recording. Timer expiry never marks movements complete.
 
-Completing a focused exercise's last unfinished set returns to the overview so the next movement can follow available equipment rather than the plan's order. Rest and recorded values stay intact. Saving a new workout returns to Train → Today with a compact review action; historical corrections keep the summary view.
+Completing a focused exercise's last unfinished set returns to the overview so the next movement can follow available equipment rather than the plan's order. Rest and recorded values stay intact. Saving a new workout returns to Home daily selection with a compact review action; historical corrections keep the summary view.
 
 Passive mouse explanations wait 700 ms, cancel when the pointer leaves, and restart the delay on a different control. The narrower passive card prefers space above its source and passes clicks through to the underlying interface. Keyboard focus and explicitly opened explanations remain immediate; explicit cards retain their close, exit and scroll controls.
 

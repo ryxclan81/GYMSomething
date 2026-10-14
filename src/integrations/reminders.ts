@@ -127,6 +127,7 @@ export function inAppReminder(
         (p) =>
           !p.archived &&
           p.startDate &&
+          p.weeks !== undefined &&
           addDays(p.startDate, p.weeks * 7) <= today,
       ),
       "A program block has reached its planned end. Review your next training phase.",

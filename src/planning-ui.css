@@ -166,6 +166,93 @@
   flex: 1;
   min-width: 120px;
 }
+.preset-onboarding-choice {
+  margin: 8px 0 0;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  min-width: 0;
+}
+.preset-onboarding-choice legend {
+  padding: 0 8px;
+  font-weight: 650;
+}
+.preset-onboarding-choice > p {
+  margin: 0 0 16px;
+}
+.preset-onboarding-choice .segmented-control {
+  margin-bottom: 0;
+}
+.preset-onboarding-summary {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+.preset-onboarding-summary ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+.preset-onboarding-summary li {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+.preset-onboarding-summary li span {
+  font-size: 13px;
+  color: var(--muted);
+}
+.preset-library-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 0 0 24px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--line);
+}
+.preset-library-entry > p {
+  margin: 0;
+  line-height: 1.6;
+  max-width: 55ch;
+}
+.preset-library-entry > button {
+  flex-shrink: 0;
+}
+.preset-preview {
+  padding: 20px;
+}
+.preset-preview > .row {
+  justify-content: flex-start;
+  gap: 16px;
+}
+.preset-preview .fine-print {
+  margin: 16px 0 0;
+}
+.prescription-editor > .row {
+  flex-wrap: nowrap;
+  gap: 10px;
+}
+.prescription-editor .text-button {
+  flex: 1;
+  min-width: 0;
+}
+@media (max-width: 600px) {
+  .preset-library-entry {
+    display: grid;
+    gap: 14px;
+  }
+  .preset-onboarding-choice {
+    padding: 16px;
+  }
+  .preset-onboarding-choice .segmented-control button {
+    padding: 12px 10px;
+  }
+}
 @media (max-width: 360px) {
   .workout-icon-options {
     grid-template-columns: repeat(3, minmax(0, 1fr));

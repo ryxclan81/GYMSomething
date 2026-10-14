@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { starterExercises } from "../src/data/exercises";
-import { defaultData } from "../src/data/defaults";
+import { starterPresetData as defaultData } from "../src/data/defaults";
 import {
   createSession,
   makeSessionExercise,

@@ -18,7 +18,10 @@ async function nav(page: Page, screen: string) {
 }
 async function workouts(page: Page) {
   await nav(page, "Plan");
-  await page.getByRole("button", { name: "Workouts", exact: true }).click();
+  await page
+    .locator(".plan-page .segmented-control")
+    .getByRole("button", { name: "Workouts", exact: true })
+    .click();
 }
 
 test("starter icons differ, chosen icons persist and new workouts lead unless an explicit sort is chosen", async ({
@@ -106,10 +109,7 @@ test("starter icons differ, chosen icons persist and new workouts lead unless an
       (template) => template.name === "Zeta morning practice",
     )!.icon,
   ).toBe("running");
-  await nav(page, "Train");
-  await page
-    .getByRole("button", { name: "Workout library", exact: true })
-    .click();
+  await nav(page, "Workouts");
   await expect(page.locator(".template-card").first()).toContainText(
     "Zeta morning practice",
   );
@@ -259,9 +259,7 @@ test("delete review can be canceled and permanent deletion preserves completed h
     .getByRole("button", { name: "Finish workout", exact: true })
     .click();
   await page.getByRole("button", { name: "Save workout", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "Let’s train.", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Good / })).toBeVisible();
   const finished = await persisted(page);
   expect(finished.activeSession).toBeNull();
   expect(finished.sessions).toHaveLength(2);

@@ -97,9 +97,8 @@ function template(
   };
 }
 
-export function defaultData(): AppData {
-  const now = new Date().toISOString();
-  const templates: Template[] = [
+export function starterTemplates(now = new Date().toISOString()): Template[] {
+  return [
     template(
       "tpl-full-a",
       "Full Body A",
@@ -317,6 +316,10 @@ export function defaultData(): AppData {
       now,
     ),
   ];
+}
+
+export function starterPresetData(): AppData {
+  const now = new Date().toISOString();
   return {
     schemaVersion: 1,
     profile: {
@@ -372,7 +375,7 @@ export function defaultData(): AppData {
     ],
     activeEquipmentId: "eq-gym",
     exercises: structuredClone(starterExercises),
-    templates,
+    templates: starterTemplates(),
     programs: [
       {
         id: "prg-full",
@@ -523,4 +526,12 @@ export function defaultData(): AppData {
     bodyMetrics: [],
     updatedAt: now,
   };
+}
+
+/** Personal plans start empty. Presets are added only after an explicit choice. */
+export function defaultData(): AppData {
+  const data = starterPresetData();
+  data.templates = [];
+  data.programs = [];
+  return data;
 }

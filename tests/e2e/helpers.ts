@@ -6,6 +6,7 @@ import {
   encodePersistedData,
 } from "../../src/state/persistence";
 import type { AppData } from "../../src/domain/types";
+import { starterPresetData } from "../../src/data/defaults";
 
 export function formControl(
   scope: Page | Locator,
@@ -70,7 +71,11 @@ export async function choose(
 }
 export async function quickOnboard(
   page: Page,
-  { name = "", unit = "kg" }: { name?: string; unit?: "kg" | "lb" } = {},
+  {
+    name = "",
+    unit = "kg",
+    seedLibrary = true,
+  }: { name?: string; unit?: "kg" | "lb"; seedLibrary?: boolean } = {},
 ) {
   await page.goto("/");
   await page.getByRole("button", { name: "Get started", exact: true }).click();
@@ -94,4 +99,15 @@ export async function quickOnboard(
     "data-saving",
     "false",
   );
+  // Most regression journeys exercise an existing user's saved library. Fresh
+  // onboarding and opt-in behavior are covered separately without this fixture.
+  if (seedLibrary) {
+    const data = await persisted(page);
+    if (!data.templates.length && !data.programs.length) {
+      const fixture = starterPresetData();
+      data.templates = fixture.templates;
+      data.programs = fixture.programs;
+      await writeData(page, data);
+    }
+  }
 }

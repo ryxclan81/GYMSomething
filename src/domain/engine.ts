@@ -98,7 +98,15 @@ export function sessionStats(session: Session): {
     reps,
     volume,
     durationSeconds: nonnegative(
-      Math.floor((end - new Date(session.startedAt).getTime()) / 1000),
+      Math.floor(
+        session.circuit
+          ? (session.circuit.elapsedMs +
+              (session.circuit.startedAt === undefined
+                ? 0
+                : Math.max(0, end - session.circuit.startedAt))) /
+              1000
+          : (end - new Date(session.startedAt).getTime()) / 1000,
+      ),
     ),
   };
 }

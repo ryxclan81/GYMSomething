@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { defaultData } from "../data/defaults";
+import { starterPresetData as defaultData } from "../data/defaults";
 import { completeSession, createSession } from "./session";
 import {
   deleteTemplate,
+  deleteProgram,
+  programDeletionImpact,
   scheduledSession,
   sortTemplates,
   templateDeletionImpact,
@@ -273,5 +275,67 @@ describe("permanent workout deletion", () => {
       /already been deleted/,
     );
     expect(data).toEqual(before);
+  });
+});
+
+describe("program deletion preserves actual and planned work", () => {
+  it("removes the program and detaches dates, leaving templates, active session and history snapshots unchanged", () => {
+    const data = defaultData();
+    const program = data.programs[0];
+    const template = data.templates.find(
+      (item) => item.id === program.templateIds[0],
+    )!;
+    const session = createSession(data, template, "done-date");
+    session.completedAt = "2026-10-01T12:00:00.000Z";
+    data.sessions = [session];
+    data.activeSession = createSession(data, template, "active-date");
+    data.schedule = [
+      {
+        id: "done-date",
+        date: "2026-10-01",
+        templateId: template.id,
+        status: "completed",
+        sessionId: session.id,
+        programId: program.id,
+        blockWeek: 1,
+        phaseName: "Foundation",
+      },
+      {
+        id: "future-date",
+        date: "2026-11-01",
+        templateId: template.id,
+        status: "planned",
+        programId: program.id,
+        blockWeek: 2,
+      },
+      {
+        id: "active-date",
+        date: "2026-10-13",
+        templateId: template.id,
+        status: "planned",
+        programId: program.id,
+      },
+    ];
+    const templates = structuredClone(data.templates);
+    const sessions = structuredClone(data.sessions);
+    const active = structuredClone(data.activeSession);
+    expect(
+      programDeletionImpact(data, program.id).calendarEntries,
+    ).toHaveLength(3);
+    deleteProgram(data, program.id);
+    expect(data.programs.some((item) => item.id === program.id)).toBe(false);
+    expect(data.templates).toEqual(templates);
+    expect(data.sessions).toEqual(sessions);
+    expect(data.activeSession).toEqual(active);
+    expect(data.schedule).toHaveLength(3);
+    expect(
+      data.schedule.every(
+        (entry) => !entry.programId && !entry.blockWeek && !entry.phaseName,
+      ),
+    ).toBe(true);
+    expect(validateBackup(data).sessions[0]).toEqual(session);
+    expect(() => deleteProgram(data, program.id)).toThrow(
+      /already been deleted/,
+    );
   });
 });

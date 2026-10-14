@@ -121,3 +121,37 @@ export function deleteTemplate(data: AppData, templateId: string) {
     }
   return impact;
 }
+
+export function programDeletionImpact(data: AppData, programId: string) {
+  return {
+    exists: data.programs.some((program) => program.id === programId),
+    calendarEntries: data.schedule.filter(
+      (entry) => entry.programId === programId,
+    ),
+    workoutCount:
+      data.programs.find((program) => program.id === programId)?.templateIds
+        .length ?? 0,
+    historyCount: data.sessions.filter((session) =>
+      data.schedule.some(
+        (entry) =>
+          entry.programId === programId &&
+          (entry.sessionId === session.id || entry.id === session.scheduleId),
+      ),
+    ).length,
+  };
+}
+
+/** Delete the reusable rotation while leaving its workouts and recorded/planned dates intact. */
+export function deleteProgram(data: AppData, programId: string) {
+  const impact = programDeletionImpact(data, programId);
+  if (!impact.exists) throw new Error("This program has already been deleted.");
+  data.programs = data.programs.filter((program) => program.id !== programId);
+  for (const entry of data.schedule) {
+    if (entry.programId !== programId) continue;
+    delete entry.programId;
+    delete entry.blockWeek;
+    delete entry.phaseName;
+  }
+  // Template variants stay usable; their provenance is historical metadata.
+  return impact;
+}

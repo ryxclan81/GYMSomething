@@ -4,6 +4,59 @@
   gap: 8px;
 }
 
+.equipment-search {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.equipment-search-control {
+  position: relative;
+}
+
+.equipment-search-control svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.equipment-search-control input {
+  width: 100%;
+  min-height: 44px;
+  padding: 12px 14px 12px 42px;
+}
+
+.equipment-selection-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 16px;
+}
+
+.equipment-selection-actions .btn {
+  min-height: 44px;
+  padding: 10px 14px;
+  justify-content: center;
+  text-align: center;
+}
+
+.equipment-selection-actions .fine-print {
+  padding: 6px 4px;
+}
+
+.equipment-environment-edit.btn {
+  min-width: 72px;
+  padding: 12px 16px;
+  text-align: center;
+  justify-content: center;
+}
+
 .equipment-inventory .equipment-choice {
   display: flex;
   align-items: center;

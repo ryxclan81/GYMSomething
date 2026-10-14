@@ -24,6 +24,7 @@ export default function ProgramApply({
 }) {
   const { data } = useApp();
   const [startDate, setStartDate] = useState(dateKey());
+  const [weeks, setWeeks] = useState(program.weeks ?? 4);
   const [align, setAlign] = useState(true);
   const [mode, setMode] = useState<ApplyMode>("keep");
   const [error, setError] = useState("");
@@ -33,15 +34,18 @@ export default function ProgramApply({
     startDate,
     days: align ? alignTrainingDays(program.days, startDate) : program.days,
   };
-  const validation = programValidation(draft);
-  const preview = validation ? null : previewProgram(draft, data.templates);
+  const scheduleDraft = { ...draft, weeks };
+  const validation = programValidation(scheduleDraft);
+  const preview = validation
+    ? null
+    : previewProgram(scheduleDraft, data.templates);
   const impact = preview ? programImpact(data, preview) : null;
   const submit = async () => {
     setBusy(true);
     try {
       let added = 0;
       await updateData((data) => {
-        added = applyProgram(data, draft, { mode }).added;
+        added = applyProgram(data, draft, { mode, scheduleWeeks: weeks }).added;
       });
       toast(`${added} workouts added to your calendar`);
       onApplied(startDate);
@@ -74,6 +78,30 @@ export default function ProgramApply({
             onChange={(event) => setStartDate(event.target.value)}
           />
         </label>
+        <label className="field">
+          Schedule length (weeks)
+          <Select
+            value={weeks}
+            onChange={(event) => setWeeks(Number(event.target.value))}
+          >
+            {[
+              ...new Set(
+                [1, 2, 3, 4, 6, 8, 12, 16, 24, program.weeks].filter(
+                  (value): value is number => value !== undefined,
+                ),
+              ),
+            ]
+              .sort((a, b) => a - b)
+              .map((value) => (
+                <option key={value} value={value}>
+                  {value} {value === 1 ? "week" : "weeks"}
+                </option>
+              ))}
+          </Select>
+          <small className="muted">
+            How far ahead to add dates. Your reusable program has no expiry.
+          </small>
+        </label>
         <label className="row">
           <span>First workout on the start date</span>
           <input
@@ -104,8 +132,8 @@ export default function ProgramApply({
         {preview && (
           <>
             <p>
-              {preview.entries.length} planned dates · {program.weeks} weeks ·
-              through {formatDate(preview.endDate)}
+              {preview.entries.length} planned dates · {weeks} weeks · through{" "}
+              {formatDate(preview.endDate)}
             </p>
             {impact && (
               <p className="fine-print">

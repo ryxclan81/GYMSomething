@@ -11,7 +11,7 @@ import {
   type ReactElement,
 } from "react";
 import { X, ArrowLeft } from "lucide-react";
-import { HelpTip, HelpToggle } from "./Help";
+import { HelpTip, HelpButton } from "./Help";
 export function Button({
   children,
   variant = "primary",
@@ -162,7 +162,7 @@ export function Sheet({
         <header className="sheet-header">
           <h2>{title}</h2>
           <div className="sheet-header-actions">
-            <HelpToggle compact className="icon-btn" />
+            <HelpButton helpTitle={title} compact className="icon-btn" />
             <IconButton label="Close" onClick={onClose}>
               <X size={20} />
             </IconButton>

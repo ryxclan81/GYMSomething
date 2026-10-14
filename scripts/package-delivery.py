@@ -42,7 +42,7 @@ source_roots = ['src', 'public', 'scripts', 'tests', 'ios', '.github', 'docs']
 root_files = [item for item in project.iterdir() if item.is_file() and (item.suffix in {'.md', '.json', '.ts', '.js', '.yaml', '.html'} or item.name in {'.gitignore', '.env.example'})]
 source_files = root_files + [item for root in source_roots for item in (project / root).rglob('*') if item.is_file()]
 source_files += [item for item in (project / 'artifacts' / 'screenshots').glob('*.png')]
-source_files += [project / 'artifacts' / 'performance.json', project / 'artifacts' / 'final-test-results' / '.last-run.json']
+source_files += [project / 'artifacts' / 'verification-summary.json']
 with ZipFile(release / 'setwise-ios-source.zip', 'w', ZIP_DEFLATED) as archive:
     for item in sorted(source_files):
         relative = item.relative_to(project)

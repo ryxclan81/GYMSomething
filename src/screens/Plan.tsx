@@ -4,6 +4,8 @@ import WorkoutIconPicker from "../components/WorkoutIconPicker";
 import { getWorkoutIconId } from "../domain/workoutIcons";
 import {
   deleteTemplate,
+  deleteProgram,
+  programDeletionImpact,
   scheduledSession,
   sortTemplates,
   templateDeletionImpact,
@@ -14,10 +16,13 @@ import "../planning-ui.css";
 import { useState } from "react";
 import ProgramApply from "../components/ProgramApply";
 import ProgramPhases from "../components/ProgramPhases";
+import ReorderList from "../components/ReorderList";
+import { CircuitTemplateEditor } from "../components/CircuitTemplateEditor";
+import { validateCircuitTemplate } from "../domain/circuit";
+import { addRecommendedPresets, recommendPresets } from "../domain/presets";
+import { useHorizontalSwipe } from "../components/useHorizontalSwipe";
 import { applyProgram, programValidation } from "../domain/planning";
 import {
-  ArrowDown,
-  ArrowUp,
   CalendarDays,
   Check,
   ChevronLeft,
@@ -76,7 +81,6 @@ const freshProgram = (): Program => ({
   id: id(),
   name: "",
   description: "",
-  weeks: 4,
   startDate: dateKey(),
   templateIds: [],
   days: [1, 3, 5],
@@ -97,6 +101,11 @@ export function Plan({
   const [program, setProgram] = useState<Program | null>(null);
   const [showArchived, setShowArchived] = useState(false);
   const [applying, setApplying] = useState<Program | null>(null);
+  const [showPresets, setShowPresets] = useState(false);
+  const swipe = useHorizontalSwipe({
+    onPrevious: () => setWeek(addDays(week, -7)),
+    onNext: () => setWeek(addDays(week, 7)),
+  });
   const [workoutSort, setWorkoutSort] = useState<TemplateSort>("recent");
   const days = Array.from({ length: 7 }, (_, i) => addDays(week, i));
   const planned = data.schedule.filter(
@@ -182,7 +191,7 @@ export function Plan({
               <ChevronRight size={20} />
             </button>
           </div>
-          <div className="week-strip">
+          <div className="week-strip" {...swipe}>
             {days.map((day) => {
               const entries = data.schedule.filter((s) => s.date === day);
               const today = day === dateKey();
@@ -381,6 +390,19 @@ export function Plan({
               </Select>
             </label>
           </div>
+          <div className="preset-library-entry">
+            <p className="muted">
+              Want a starting point? See a small selection matched to your
+              training preferences and equipment.
+            </p>
+            <button
+              type="button"
+              className="btn secondary"
+              onClick={() => setShowPresets(true)}
+            >
+              <Dumbbell size={17} /> Browse matching presets
+            </button>
+          </div>
           {templates.length === 0 ? (
             <div className="empty-state">
               <Dumbbell size={28} />
@@ -458,7 +480,7 @@ export function Plan({
       {tab === "Programs" && (
         <>
           <div className="section-heading">
-            <span className="eyebrow">TRAINING BLOCKS</span>
+            <span className="eyebrow">REUSABLE ROTATIONS</span>
             <button
               className="btn secondary"
               onClick={() => setProgram(freshProgram())}
@@ -471,8 +493,8 @@ export function Plan({
               <CalendarDays size={28} />
               <h3>Give your training direction</h3>
               <p className="muted">
-                Combine saved workouts into a repeatable block with planned
-                lighter weeks.
+                Combine saved workouts in a repeatable order. Choose how far
+                ahead to schedule dates when you use the program.
               </p>
               <button
                 className="btn primary"
@@ -487,7 +509,10 @@ export function Plan({
                 <article className="program-row" key={p.id}>
                   <div className="section-heading">
                     <span className="eyebrow">
-                      {p.weeks}-WEEK BLOCK {p.archived ? " / ARCHIVED" : ""}
+                      {p.weeks
+                        ? `${p.weeks}-WEEK SCHEDULE`
+                        : "REUSABLE PROGRAM"}{" "}
+                      {p.archived ? " / ARCHIVED" : ""}
                     </span>
                     <button
                       className="icon-button"
@@ -501,10 +526,12 @@ export function Plan({
                   <p className="muted">{p.description}</p>
                   <div className="program-line">
                     <span>{p.phase}</span>
-                    <span className="muted">
-                      {formatDate(p.startDate)} —{" "}
-                      {formatDate(addDays(p.startDate, p.weeks * 7 - 1))}
-                    </span>
+                    {p.weeks && (
+                      <span className="muted">
+                        {formatDate(p.startDate)} —{" "}
+                        {formatDate(addDays(p.startDate, p.weeks * 7 - 1))}
+                      </span>
+                    )}
                   </div>
                   <div className="chip-row">
                     {p.days.map((day) => (
@@ -521,7 +548,7 @@ export function Plan({
                       .map((t) => data.templates.find((x) => x.id === t)?.name)
                       .filter(Boolean)
                       .join(" / ") ||
-                      "Add workouts to this block before scheduling it."}
+                      "Add workouts to this rotation before scheduling it."}
                   </p>
                   <div className="row" style={{ justifyContent: "flex-start" }}>
                     <button
@@ -535,7 +562,7 @@ export function Plan({
                       className="btn secondary"
                       onClick={() => setProgram(p)}
                     >
-                      Edit block
+                      Edit program
                     </button>
                     <button
                       className="btn ghost"
@@ -560,7 +587,7 @@ export function Plan({
                         const repeat = {
                           ...structuredClone(p),
                           id: id(),
-                          startDate: addDays(p.startDate, p.weeks * 7),
+                          startDate: addDays(p.startDate, (p.weeks ?? 4) * 7),
                           archived: false,
                         };
                         await updateData((d) => {
@@ -578,6 +605,7 @@ export function Plan({
           )}
         </>
       )}
+      {showPresets && <PresetReview onClose={() => setShowPresets(false)} />}
       {selectedDate && (
         <Sheet
           title={`Plan ${formatDate(selectedDate, { weekday: "long", month: "short", day: "numeric" })}`}
@@ -678,7 +706,7 @@ export function Plan({
       )}
       {program && (
         <Sheet
-          title={program.name ? "Edit training block" : "New training block"}
+          title={program.name ? "Edit program" : "New program"}
           onClose={() => setProgram(null)}
         >
           <ProgramEditor program={program} onClose={() => setProgram(null)} />
@@ -929,20 +957,14 @@ function TemplateEditor({
         p.id === prescriptionId ? { ...p, ...value } : p,
       ),
     }));
-  const move = (index: number, offset: number) =>
-    setDraft((d) => {
-      const exercises = [...d.exercises];
-      const target = index + offset;
-      if (target < 0 || target >= exercises.length) return d;
-      [exercises[index], exercises[target]] = [
-        exercises[target],
-        exercises[index],
-      ];
-      return { ...d, exercises };
-    });
   const save = async () => {
     if (!draft.name.trim() || draft.exercises.length === 0) {
       setError("Give your workout a name and add at least one exercise.");
+      return;
+    }
+    const circuitError = validateCircuitTemplate(draft, data.exercises);
+    if (circuitError) {
+      setError(circuitError);
       return;
     }
     if (draft.exercises.some((p) => p.repMin > p.repMax)) {
@@ -977,7 +999,20 @@ function TemplateEditor({
         onPick={(e) => {
           setDraft((d) => ({
             ...d,
-            exercises: [...d.exercises, prescription(e)],
+            exercises: [
+              ...d.exercises,
+              (() => {
+                const target = prescription(e);
+                return d.circuit
+                  ? {
+                      ...target,
+                      sets: 1,
+                      repMax: target.repMin,
+                      restSeconds: 0,
+                    }
+                  : target;
+              })(),
+            ],
           }));
           setPicking(false);
         }}
@@ -1029,268 +1064,319 @@ function TemplateEditor({
               ))}
             </Select>
           </label>
-          <label className="field">
-            Duration (minutes)
-            <NumericInput
-              className="input"
-              min={5}
-              max={300}
-              required
-              value={draft.minutes}
-              onChange={(e) => patch({ minutes: Number(e.target.value) })}
-            />
-          </label>
+          {!draft.circuit && (
+            <label className="field">
+              Estimated session length (minutes)
+              <NumericInput
+                className="input"
+                min={5}
+                max={300}
+                required
+                value={draft.minutes}
+                onChange={(e) => patch({ minutes: Number(e.target.value) })}
+              />
+            </label>
+          )}
         </div>
+        <CircuitTemplateEditor
+          value={draft.circuit}
+          onChange={(circuit) =>
+            setDraft((previous) => ({
+              ...previous,
+              circuit,
+              minutes: circuit
+                ? Math.ceil(circuit.durationSeconds / 60)
+                : previous.minutes,
+              exercises: circuit
+                ? previous.exercises.map((entry) => ({
+                    ...entry,
+                    sets: 1,
+                    repMax: entry.repMin,
+                    restSeconds: 0,
+                  }))
+                : previous.exercises,
+            }))
+          }
+        />
         <div className="section-heading">
           <h3>Movements</h3>
           <span className="muted">{draft.exercises.length}</span>
         </div>
-        {draft.exercises.map((p, index) => {
-          const exercise = data.exercises.find((e) => e.id === p.exerciseId);
-          return (
-            <div key={p.id} className="prescription-editor surface">
-              <div className="row">
-                <button
-                  className="text-button"
-                  type="button"
-                  onClick={() => setExpanded(expanded === p.id ? null : p.id)}
-                >
-                  <span className="eyebrow">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <strong>{exercise?.name ?? "Archived exercise"}</strong>
-                  {exercise && (
-                    <small className="muscle-label">
-                      Targets: {exercise.primary.join(", ")}
-                    </small>
-                  )}
-                  <small className="muted">
-                    {p.sets} sets ·{" "}
-                    {exercise?.measurement === "cardio"
-                      ? `${Math.round(p.durationSeconds / 60)} min`
-                      : exercise?.measurement === "duration"
-                        ? `${p.durationSeconds}s`
-                        : `${p.repMin}–${p.repMax} reps`}{" "}
-                    · {p.restSeconds}s rest{" "}
-                    {p.group ? ` / Group ${p.group}` : ""}
-                  </small>
-                </button>
+        <ReorderList
+          items={draft.exercises}
+          getId={(entry) => entry.id}
+          getLabel={(entry) =>
+            data.exercises.find((exercise) => exercise.id === entry.exerciseId)
+              ?.name ?? "Archived exercise"
+          }
+          onReorder={(exercises) => patch({ exercises })}
+          ariaLabel="Workout exercise order"
+          renderItem={(p, index, handle) => {
+            const exercise = data.exercises.find((e) => e.id === p.exerciseId);
+            return (
+              <div key={p.id} className="prescription-editor surface">
                 <div className="row">
+                  {handle}
                   <button
+                    className="text-button"
                     type="button"
-                    className="icon-button"
-                    aria-label="Move exercise up"
-                    disabled={index === 0}
-                    onClick={() => move(index, -1)}
+                    onClick={() => setExpanded(expanded === p.id ? null : p.id)}
                   >
-                    <ArrowUp size={15} />
-                  </button>
-                  <button
-                    type="button"
-                    className="icon-button"
-                    aria-label="Move exercise down"
-                    disabled={index === draft.exercises.length - 1}
-                    onClick={() => move(index, 1)}
-                  >
-                    <ArrowDown size={15} />
-                  </button>
-                  <button
-                    type="button"
-                    className="icon-button"
-                    aria-label="Remove exercise"
-                    onClick={() =>
-                      patch({
-                        exercises: draft.exercises.filter((x) => x.id !== p.id),
-                      })
-                    }
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-              {expanded === p.id && (
-                <div className="stack" style={{ marginTop: 20 }}>
-                  <div className="grid-2">
-                    <NumberField
-                      label="Sets"
-                      min={1}
-                      max={30}
-                      value={p.sets}
-                      onChange={(sets) => setPrescription(p.id, { sets })}
-                    />
-                    {exercise?.measurement === "duration" ||
-                    exercise?.measurement === "cardio" ? (
-                      <>
-                        <NumberField
-                          label="Duration (seconds)"
-                          min={1}
-                          max={86400}
-                          value={p.durationSeconds}
-                          onChange={(durationSeconds) =>
-                            setPrescription(p.id, { durationSeconds })
-                          }
-                        />
-                        {exercise.measurement === "cardio" && (
-                          <NumberField
-                            label="Distance (km)"
-                            step={0.1}
-                            min={0}
-                            max={1000}
-                            value={p.distanceKm}
-                            onChange={(distanceKm) =>
-                              setPrescription(p.id, { distanceKm })
-                            }
-                          />
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <NumberField
-                          label="Minimum reps"
-                          min={1}
-                          max={500}
-                          value={p.repMin}
-                          onChange={(repMin) =>
-                            setPrescription(p.id, { repMin })
-                          }
-                        />
-                        <NumberField
-                          label="Maximum reps"
-                          min={1}
-                          max={500}
-                          value={p.repMax}
-                          onChange={(repMax) =>
-                            setPrescription(p.id, { repMax })
-                          }
-                        />
-                        {exercise?.load !== "none" && (
-                          <NumberField
-                            label={`Target load (${data.profile.unit}${exercise?.load === "per-hand" ? " per hand" : ""})`}
-                            min={0}
-                            max={2000}
-                            step={0.01}
-                            value={Number(
-                              fromKg(p.weightKg, data.profile.unit).toFixed(2),
-                            )}
-                            onChange={(weight) =>
-                              setPrescription(p.id, {
-                                weightKg: toKg(weight, data.profile.unit),
-                              })
-                            }
-                          />
-                        )}
-                      </>
+                    <span className="eyebrow">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <strong>{exercise?.name ?? "Archived exercise"}</strong>
+                    {exercise && (
+                      <small className="muscle-label">
+                        Targets: {exercise.primary.join(", ")}
+                      </small>
                     )}
-                    <NumberField
-                      label="Rest (seconds)"
-                      min={0}
-                      max={1800}
-                      value={p.restSeconds}
-                      onChange={(restSeconds) =>
-                        setPrescription(p.id, { restSeconds })
-                      }
-                    />
-                    <label className="field">
-                      Target RIR (optional)
-                      <NumericInput
-                        className="input"
-                        min={0}
-                        max={10}
-                        value={p.rir ?? ""}
-                        onChange={(e) =>
-                          setPrescription(p.id, {
-                            rir:
-                              e.target.value === ""
-                                ? undefined
-                                : Number(e.target.value),
-                          })
-                        }
-                      />
-                    </label>
-                    <label className="field">
-                      Target RPE (optional)
-                      <NumericInput
-                        className="input"
-                        min={1}
-                        max={10}
-                        step={0.5}
-                        value={p.rpe ?? ""}
-                        onChange={(e) =>
-                          setPrescription(p.id, {
-                            rpe:
-                              e.target.value === ""
-                                ? undefined
-                                : Number(e.target.value),
-                          })
-                        }
-                      />
-                    </label>
-                  </div>
-                  <label className="field">
-                    Superset / circuit group
-                    <input
-                      className="input"
-                      value={p.group}
-                      onChange={(e) =>
-                        setPrescription(p.id, { group: e.target.value })
-                      }
-                      placeholder="A, B, or Circuit 1"
-                    />
                     <small className="muted">
-                      Use the same group for movements you want to alternate.
+                      {draft.circuit ? "Each round" : `${p.sets} sets`} ·{" "}
+                      {exercise?.measurement === "cardio"
+                        ? `${Math.round(p.durationSeconds / 60)} min`
+                        : exercise?.measurement === "duration"
+                          ? `${p.durationSeconds}s`
+                          : draft.circuit
+                            ? `${p.repMin} reps`
+                            : `${p.repMin}–${p.repMax} reps`}{" "}
+                      {draft.circuit
+                        ? " · repeat until timer ends"
+                        : ` · ${p.restSeconds}s rest`}{" "}
+                      {p.group ? ` / Group ${p.group}` : ""}
                     </small>
-                  </label>
-                  <label className="field">
-                    Exercise cues
-                    <textarea
-                      className="input"
-                      rows={2}
-                      value={p.notes}
-                      onChange={(e) =>
-                        setPrescription(p.id, { notes: e.target.value })
+                  </button>
+                  <div className="row">
+                    <button
+                      type="button"
+                      className="icon-button"
+                      aria-label="Remove exercise"
+                      onClick={() =>
+                        patch({
+                          exercises: draft.exercises.filter(
+                            (x) => x.id !== p.id,
+                          ),
+                        })
                       }
-                    />
-                  </label>
-                  <details>
-                    <summary>Progression rules</summary>
-                    <div className="stack" style={{ marginTop: 16 }}>
-                      <label className="row">
-                        <span>Use exercise-specific rules</span>
-                        <input
-                          type="checkbox"
-                          checked={Boolean(p.rule)}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+                {expanded === p.id && (
+                  <div className="stack" style={{ marginTop: 20 }}>
+                    <div className="grid-2">
+                      {!draft.circuit && (
+                        <NumberField
+                          label="Sets"
+                          min={1}
+                          max={30}
+                          value={p.sets}
+                          onChange={(sets) => setPrescription(p.id, { sets })}
+                        />
+                      )}
+                      {exercise?.measurement === "duration" ||
+                      exercise?.measurement === "cardio" ? (
+                        <>
+                          <NumberField
+                            label="Duration (seconds)"
+                            min={1}
+                            max={86400}
+                            value={p.durationSeconds}
+                            onChange={(durationSeconds) =>
+                              setPrescription(p.id, { durationSeconds })
+                            }
+                          />
+                          {exercise.measurement === "cardio" && (
+                            <NumberField
+                              label="Distance (km)"
+                              step={0.1}
+                              min={0}
+                              max={1000}
+                              value={p.distanceKm}
+                              onChange={(distanceKm) =>
+                                setPrescription(p.id, { distanceKm })
+                              }
+                            />
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {draft.circuit ? (
+                            <NumberField
+                              label="Per-round reps"
+                              min={1}
+                              max={500}
+                              value={p.repMin}
+                              onChange={(reps) =>
+                                setPrescription(p.id, {
+                                  repMin: reps,
+                                  repMax: reps,
+                                })
+                              }
+                            />
+                          ) : (
+                            <>
+                              <NumberField
+                                label="Minimum reps"
+                                min={1}
+                                max={500}
+                                value={p.repMin}
+                                onChange={(repMin) =>
+                                  setPrescription(p.id, { repMin })
+                                }
+                              />
+                              <NumberField
+                                label="Maximum reps"
+                                min={1}
+                                max={500}
+                                value={p.repMax}
+                                onChange={(repMax) =>
+                                  setPrescription(p.id, { repMax })
+                                }
+                              />
+                            </>
+                          )}
+                          {exercise?.load !== "none" && (
+                            <NumberField
+                              label={`Target load (${data.profile.unit}${exercise?.load === "per-hand" ? " per hand" : ""})`}
+                              min={0}
+                              max={2000}
+                              step={0.01}
+                              value={Number(
+                                fromKg(p.weightKg, data.profile.unit).toFixed(
+                                  2,
+                                ),
+                              )}
+                              onChange={(weight) =>
+                                setPrescription(p.id, {
+                                  weightKg: toKg(weight, data.profile.unit),
+                                })
+                              }
+                            />
+                          )}
+                        </>
+                      )}
+                      {!draft.circuit && (
+                        <NumberField
+                          label="Rest (seconds)"
+                          min={0}
+                          max={1800}
+                          value={p.restSeconds}
+                          onChange={(restSeconds) =>
+                            setPrescription(p.id, { restSeconds })
+                          }
+                        />
+                      )}
+                      <label className="field">
+                        Target RIR (optional)
+                        <NumericInput
+                          className="input"
+                          min={0}
+                          max={10}
+                          value={p.rir ?? ""}
                           onChange={(e) =>
                             setPrescription(p.id, {
-                              rule: e.target.checked
-                                ? {
-                                    ...data.profile.progression,
-                                    repMin: p.repMin,
-                                    repMax: p.repMax,
-                                  }
-                                : undefined,
+                              rir:
+                                e.target.value === ""
+                                  ? undefined
+                                  : Number(e.target.value),
                             })
                           }
                         />
                       </label>
-                      {p.rule ? (
-                        <RuleEditor
-                          rule={p.rule}
-                          onChange={(rule) => setPrescription(p.id, { rule })}
-                          unit={data.profile.unit}
+                      <label className="field">
+                        Target RPE (optional)
+                        <NumericInput
+                          className="input"
+                          min={1}
+                          max={10}
+                          step={0.5}
+                          value={p.rpe ?? ""}
+                          onChange={(e) =>
+                            setPrescription(p.id, {
+                              rpe:
+                                e.target.value === ""
+                                  ? undefined
+                                  : Number(e.target.value),
+                            })
+                          }
                         />
-                      ) : (
-                        <p className="muted">
-                          Uses your profile's progression rule. Suggestions
-                          always require your confirmation.
-                        </p>
-                      )}
+                      </label>
                     </div>
-                  </details>
-                </div>
-              )}
-            </div>
-          );
-        })}
+                    {!draft.circuit && (
+                      <label className="field">
+                        Superset / circuit group
+                        <input
+                          className="input"
+                          value={p.group}
+                          onChange={(e) =>
+                            setPrescription(p.id, { group: e.target.value })
+                          }
+                          placeholder="A, B, or Circuit 1"
+                        />
+                        <small className="muted">
+                          Use the same group for movements you want to
+                          alternate.
+                        </small>
+                      </label>
+                    )}
+                    <label className="field">
+                      Exercise cues
+                      <textarea
+                        className="input"
+                        rows={2}
+                        value={p.notes}
+                        onChange={(e) =>
+                          setPrescription(p.id, { notes: e.target.value })
+                        }
+                      />
+                    </label>
+                    {!draft.circuit && (
+                      <details>
+                        <summary>Progression rules</summary>
+                        <div className="stack" style={{ marginTop: 16 }}>
+                          <label className="row">
+                            <span>Use exercise-specific rules</span>
+                            <input
+                              type="checkbox"
+                              checked={Boolean(p.rule)}
+                              onChange={(e) =>
+                                setPrescription(p.id, {
+                                  rule: e.target.checked
+                                    ? {
+                                        ...data.profile.progression,
+                                        repMin: p.repMin,
+                                        repMax: p.repMax,
+                                      }
+                                    : undefined,
+                                })
+                              }
+                            />
+                          </label>
+                          {p.rule ? (
+                            <RuleEditor
+                              rule={p.rule}
+                              onChange={(rule) =>
+                                setPrescription(p.id, { rule })
+                              }
+                              unit={data.profile.unit}
+                            />
+                          ) : (
+                            <p className="muted">
+                              Uses your profile's progression rule. Suggestions
+                              always require your confirmation.
+                            </p>
+                          )}
+                        </div>
+                      </details>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          }}
+        />
         <button
           type="button"
           className="btn secondary"
@@ -1324,7 +1410,22 @@ function TemplateEditor({
                   ...structuredClone(draft),
                   id: id(),
                   name: `${draft.name} · short`,
-                  minutes: Math.max(15, Math.round(draft.minutes / 2)),
+                  minutes: draft.circuit
+                    ? Math.ceil(
+                        Math.max(
+                          1,
+                          Math.round(draft.circuit.durationSeconds / 2),
+                        ) / 60,
+                      )
+                    : Math.max(15, Math.round(draft.minutes / 2)),
+                  circuit: draft.circuit
+                    ? {
+                        durationSeconds: Math.max(
+                          1,
+                          Math.round(draft.circuit.durationSeconds / 2),
+                        ),
+                      }
+                    : undefined,
                   exercises: draft.exercises
                     .slice(
                       0,
@@ -1366,7 +1467,7 @@ function TemplateEditor({
               type="button"
               className="btn danger"
               aria-label={`Delete ${template.name}`}
-            disabled={saving}
+              disabled={saving}
               onClick={() => setDeleting(true)}
             >
               <Trash2 size={17} /> Delete workout
@@ -1499,6 +1600,194 @@ function DeleteWorkoutReview({
   );
 }
 
+function PresetReview({ onClose }: { onClose: () => void }) {
+  const { data } = useApp();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const equipment =
+    data.equipment.find((item) => item.id === data.activeEquipmentId) ??
+    data.equipment[0];
+  const recommendation = recommendPresets(
+    data.profile,
+    equipment,
+    data.exercises,
+  );
+  const available = recommendation.templates.filter(
+    (template) => !data.templates.some((saved) => saved.id === template.id),
+  );
+  return (
+    <Sheet title="Matching starter presets" onClose={onClose}>
+      <div className="stack preset-review">
+        <p className="muted">{recommendation.reason}</p>
+        {recommendation.templates.map((template) => (
+          <article className="surface preset-preview" key={template.id}>
+            <div className="row">
+              <WorkoutIcon template={template} exercises={data.exercises} />
+              <div>
+                <h3>{template.name}</h3>
+                <p className="muted">
+                  {template.exercises.length} movements · up to{" "}
+                  {template.minutes} min
+                </p>
+              </div>
+            </div>
+            <p className="fine-print">
+              {template.exercises
+                .map(
+                  (entry) =>
+                    data.exercises.find(
+                      (exercise) => exercise.id === entry.exerciseId,
+                    )?.name,
+                )
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+            {data.templates.some((saved) => saved.id === template.id) && (
+              <span className="small muted">
+                Already in your library; your saved edits stay intact.
+              </span>
+            )}
+          </article>
+        ))}
+        {recommendation.templates.length > 0 ? (
+          <p className="fine-print">
+            Adds these workouts and a reusable{" "}
+            {recommendation.program.name.toLowerCase()}. No dates are scheduled
+            until you choose Use program.
+          </p>
+        ) : (
+          <p className="muted">
+            No compatible starter movements match this inventory. Create a
+            custom workout or review your equipment.
+          </p>
+        )}
+        {error && (
+          <p className="error-text" role="alert">
+            {error}
+          </p>
+        )}
+        <button
+          type="button"
+          className="btn primary"
+          disabled={busy || !available.length}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              let count = 0;
+              await updateData((draft) => {
+                count = addRecommendedPresets(draft, recommendation);
+              });
+              toast(
+                `${count} matching ${count === 1 ? "preset" : "presets"} added`,
+              );
+              onClose();
+            } catch (exception) {
+              setError(
+                exception instanceof Error
+                  ? exception.message
+                  : "Unable to add presets.",
+              );
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          {busy
+            ? "Adding…"
+            : available.length
+              ? `Add ${available.length} matching ${available.length === 1 ? "preset" : "presets"}`
+              : "Matching presets already added"}
+        </button>
+      </div>
+    </Sheet>
+  );
+}
+
+function DeleteProgramReview({
+  program,
+  onCancel,
+  onDeleted,
+}: {
+  program: Program;
+  onCancel: () => void;
+  onDeleted: () => void;
+}) {
+  const { data } = useApp();
+  const impact = programDeletionImpact(data, program.id);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  return (
+    <Sheet title="Delete program" onClose={onCancel}>
+      <div className="delete-workout-review">
+        <p>
+          Permanently delete <strong>{program.name}</strong> from your programs?
+        </p>
+        <div className="delete-workout-summary">
+          <ul>
+            <li>Your saved workout templates stay available.</li>
+            <li>
+              {impact.calendarEntries.length} planned or recorded calendar{" "}
+              {impact.calendarEntries.length === 1
+                ? "entry stays"
+                : "entries stay"}{" "}
+              on the same dates, detached from this program.
+            </li>
+            <li>
+              Your completed workout history and active workout stay intact.
+            </li>
+          </ul>
+        </div>
+        <p className="muted">
+          The reusable rotation is deleted. You can create a new program from
+          the same saved workouts.
+        </p>
+        {error && (
+          <p role="alert" className="error-text">
+            {error}
+          </p>
+        )}
+        <div className="delete-workout-actions">
+          <button
+            type="button"
+            className="btn secondary"
+            disabled={busy}
+            onClick={onCancel}
+          >
+            Keep program
+          </button>
+          <button
+            type="button"
+            className="btn danger"
+            disabled={busy || !impact.exists}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                await updateData((draft) => {
+                  deleteProgram(draft, program.id);
+                });
+                toast(
+                  "Program deleted; workouts, dates and history are preserved",
+                );
+                onDeleted();
+              } catch (exception) {
+                setError(
+                  exception instanceof Error
+                    ? exception.message
+                    : "Unable to delete this program.",
+                );
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {busy ? "Deleting…" : "Delete program"}
+          </button>
+        </div>
+      </div>
+    </Sheet>
+  );
+}
+
 function ProgramEditor({
   program,
   onClose,
@@ -1508,9 +1797,8 @@ function ProgramEditor({
 }) {
   const { data } = useApp();
   const [draft, setDraft] = useState<Program>(structuredClone(program));
-  const [apply, setApply] = useState(
-    !data.programs.some((value) => value.id === program.id),
-  );
+  const [apply, setApply] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
   const patch = (value: Partial<Program>) =>
     setDraft((d) => ({ ...d, ...value }));
@@ -1538,7 +1826,7 @@ function ProgramEditor({
       toast(
         apply
           ? `Program saved. ${count} sessions added to your calendar.`
-          : "Training block saved",
+          : "Program saved",
       );
       onClose();
     } catch (e) {
@@ -1546,195 +1834,250 @@ function ProgramEditor({
     }
   };
   return (
-    <form
-      className="stack"
-      onSubmit={(e) => {
-        e.preventDefault();
-        void save();
-      }}
-    >
-      <label className="field">
-        Program name
-        <input
-          className="input"
-          required
-          value={draft.name}
-          onChange={(e) => patch({ name: e.target.value })}
-          placeholder="Your next training block"
-        />
-      </label>
-      <label className="field">
-        Description
-        <textarea
-          className="input"
-          rows={2}
-          value={draft.description}
-          onChange={(e) => patch({ description: e.target.value })}
-        />
-      </label>
-      <div className="grid-2">
+    <>
+      <form
+        className="stack"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void save();
+        }}
+      >
         <label className="field">
-          Start date
+          Program name
           <input
             className="input"
-            type="date"
             required
-            value={draft.startDate}
-            onChange={(e) => patch({ startDate: e.target.value })}
+            value={draft.name}
+            onChange={(e) => patch({ name: e.target.value })}
+            placeholder="Your reusable workout rotation"
           />
         </label>
         <label className="field">
-          Block length
-          <Select
+          Description
+          <textarea
             className="input"
-            value={draft.weeks}
-            onChange={(e) => patch({ weeks: Number(e.target.value) })}
-          >
-            {[1, 2, 3, 4, 6, 8, 12, 16, 24].map((n) => (
-              <option key={n} value={n}>
-                {n} weeks
-              </option>
-            ))}
-          </Select>
-        </label>
-        <label className="field">
-          Phase / training emphasis
-          <input
-            className="input"
-            value={draft.phase}
-            onChange={(e) => patch({ phase: e.target.value })}
-            placeholder="Foundation, strength, accumulation"
+            rows={2}
+            value={draft.description}
+            onChange={(e) => patch({ description: e.target.value })}
           />
         </label>
-        <label className="field">
-          Planned lighter week
-          <Select
-            className="input"
-            value={draft.deloadWeek ?? ""}
-            onChange={(e) =>
-              patch({
-                deloadWeek: e.target.value ? Number(e.target.value) : undefined,
-              })
-            }
-          >
-            <option value="">None</option>
-            {Array.from({ length: draft.weeks }, (_, i) => (
-              <option key={i} value={i + 1}>
-                Week {i + 1}
-              </option>
-            ))}
-          </Select>
-        </label>
-      </div>
-      <p className="muted">
-        Block ends{" "}
-        {formatDate(addDays(draft.startDate, draft.weeks * 7 - 1), {
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        })}
-        . Phase targets are applied to the corresponding weeks.
-      </p>
-      <ProgramPhases
-        phases={draft.phases ?? []}
-        weeks={draft.weeks}
-        onChange={(phases) => patch({ phases })}
-      />
-      <label className="field">Training days</label>
-      <div className="chip-row">
-        {[1, 2, 3, 4, 5, 6, 0].map((day) => (
-          <button
-            className={`chip ${draft.days.includes(day) ? "active" : ""}`}
-            type="button"
-            aria-pressed={draft.days.includes(day)}
-            key={day}
-            onClick={() =>
-              patch({
-                days: draft.days.includes(day)
-                  ? draft.days.filter((d) => d !== day)
-                  : [...draft.days, day],
-              })
-            }
-          >
-            {weekdays[day]}
-          </button>
-        ))}
-      </div>
-      <h3>Workouts in rotation</h3>
-      <p className="muted">
-        Select workouts in the order you want them to repeat across training
-        days.
-      </p>
-      {data.templates
-        .filter((t) => !t.archived)
-        .map((t) => (
-          <label className="list-row" key={t.id}>
-            <div>
-              <strong>{t.name}</strong>
-              <small className="muted">
-                {t.focus} · {t.minutes} min{" "}
-                {draft.templateIds.includes(t.id)
-                  ? `· position ${draft.templateIds.indexOf(t.id) + 1}`
-                  : ""}
-              </small>
-            </div>
+        <div className="grid-2">
+          <label className="field">
+            Start date for scheduling
             <input
-              type="checkbox"
-              checked={draft.templateIds.includes(t.id)}
-              onChange={() => toggleTemplate(t.id)}
+              className="input"
+              type="date"
+              required
+              value={draft.startDate}
+              onChange={(e) => patch({ startDate: e.target.value })}
             />
           </label>
-        ))}
-      <label className="surface row">
-        <div>
-          <strong>Add this block to my calendar</strong>
-          <small className="muted">
-            Existing sessions are preserved. The lighter week creates separate
-            lower-volume templates.
-          </small>
+          <label className="field">
+            Schedule length (optional)
+            <Select
+              className="input"
+              value={draft.weeks ?? ""}
+              onChange={(e) =>
+                patch({
+                  weeks: e.target.value ? Number(e.target.value) : undefined,
+                  deloadWeek: e.target.value ? draft.deloadWeek : undefined,
+                  phases: e.target.value ? draft.phases : undefined,
+                })
+              }
+            >
+              <option value="">Reusable rotation — no fixed length</option>
+              {[1, 2, 3, 4, 6, 8, 12, 16, 24].map((n) => (
+                <option key={n} value={n}>
+                  {n} weeks
+                </option>
+              ))}
+            </Select>
+          </label>
+          <label className="field">
+            Phase / training emphasis
+            <input
+              className="input"
+              value={draft.phase}
+              onChange={(e) => patch({ phase: e.target.value })}
+              placeholder="Foundation, strength, accumulation"
+            />
+          </label>
+          <label className="field">
+            Planned lighter week
+            <Select
+              className="input"
+              disabled={!draft.weeks}
+              value={draft.deloadWeek ?? ""}
+              onChange={(e) =>
+                patch({
+                  deloadWeek: e.target.value
+                    ? Number(e.target.value)
+                    : undefined,
+                })
+              }
+            >
+              <option value="">None</option>
+              {Array.from({ length: draft.weeks ?? 0 }, (_, i) => (
+                <option key={i} value={i + 1}>
+                  Week {i + 1}
+                </option>
+              ))}
+            </Select>
+          </label>
         </div>
-        <input
-          type="checkbox"
-          checked={apply}
-          onChange={(e) => setApply(e.target.checked)}
-        />
-      </label>
-      {draft.deloadWeek && apply && (
         <p className="fine-print">
-          Lighter sessions use approximately one third fewer sets and 10% less
-          target load. This is a planning choice you approve here, not an
-          automatic prescription. Edit the created templates for
-          exercise-specific needs.
+          Programs are reusable rotations, so a length is optional. A schedule
+          length controls how many weeks to add to the calendar; it does not
+          expire the program.
         </p>
-      )}
-      {error && (
-        <p role="alert" className="error-text">
-          {error}
+        {draft.weeks && (
+          <>
+            <p className="muted">
+              Schedule through{" "}
+              {formatDate(addDays(draft.startDate, draft.weeks * 7 - 1))}. Phase
+              targets apply to the corresponding scheduled weeks.
+            </p>
+            <ProgramPhases
+              phases={draft.phases ?? []}
+              weeks={draft.weeks}
+              onChange={(phases) => patch({ phases })}
+            />
+          </>
+        )}
+        <label className="field">Training days</label>
+        <div className="chip-row">
+          {[1, 2, 3, 4, 5, 6, 0].map((day) => (
+            <button
+              className={`chip ${draft.days.includes(day) ? "active" : ""}`}
+              type="button"
+              aria-pressed={draft.days.includes(day)}
+              key={day}
+              onClick={() =>
+                patch({
+                  days: draft.days.includes(day)
+                    ? draft.days.filter((d) => d !== day)
+                    : [...draft.days, day],
+                })
+              }
+            >
+              {weekdays[day]}
+            </button>
+          ))}
+        </div>
+        <h3>Workouts in rotation</h3>
+        <p className="muted">
+          Select workouts in the order you want them to repeat across training
+          days.
         </p>
-      )}
-      <button className="btn primary" type="submit">
-        <Check size={18} /> Save block
-      </button>
-      {data.programs.some((p) => p.id === program.id) && (
-        <button
-          className="btn danger"
-          type="button"
-          onClick={async () => {
-            await updateData((d) => {
-              const p = d.programs.find((x) => x.id === program.id);
-              if (p) p.archived = !p.archived;
-            });
-            toast(
-              program.archived
-                ? "Block restored"
-                : "Block archived; scheduled sessions are preserved",
-            );
-            onClose();
-          }}
-        >
-          {program.archived ? "Restore block" : "Archive block"}
+        {draft.templateIds.length > 0 && (
+          <ReorderList
+            items={draft.templateIds}
+            getId={(templateId) => templateId}
+            getLabel={(templateId) =>
+              data.templates.find((template) => template.id === templateId)
+                ?.name ?? "Unavailable workout"
+            }
+            onReorder={(templateIds) => patch({ templateIds })}
+            ariaLabel="Program workout order"
+            renderItem={(templateId, index, handle) => (
+              <div className="list-row">
+                {handle}
+                <span>
+                  {index + 1}.{" "}
+                  {data.templates.find((template) => template.id === templateId)
+                    ?.name ?? "Unavailable workout"}
+                </span>
+              </div>
+            )}
+          />
+        )}
+        {data.templates
+          .filter((t) => !t.archived)
+          .map((t) => (
+            <label className="list-row" key={t.id}>
+              <div>
+                <strong>{t.name}</strong>
+                <small className="muted">
+                  {t.focus} · {t.minutes} min{" "}
+                  {draft.templateIds.includes(t.id)
+                    ? `· position ${draft.templateIds.indexOf(t.id) + 1}`
+                    : ""}
+                </small>
+              </div>
+              <input
+                type="checkbox"
+                checked={draft.templateIds.includes(t.id)}
+                onChange={() => toggleTemplate(t.id)}
+              />
+            </label>
+          ))}
+        <label className="surface row">
+          <div>
+            <strong>Also schedule dates now</strong>
+            <small className="muted">
+              Existing sessions are preserved. A rotation without a fixed length
+              adds four weeks; use the program later to choose another range.
+            </small>
+          </div>
+          <input
+            type="checkbox"
+            checked={apply}
+            onChange={(e) => setApply(e.target.checked)}
+          />
+        </label>
+        {draft.deloadWeek && apply && (
+          <p className="fine-print">
+            Lighter sessions use approximately one third fewer sets and 10% less
+            target load. This is a planning choice you approve here, not an
+            automatic prescription. Edit the created templates for
+            exercise-specific needs.
+          </p>
+        )}
+        {error && (
+          <p role="alert" className="error-text">
+            {error}
+          </p>
+        )}
+        <button className="btn primary" type="submit">
+          <Check size={18} /> Save program
         </button>
+        {data.programs.some((p) => p.id === program.id) && (
+          <>
+            <button
+              className="btn danger"
+              type="button"
+              onClick={async () => {
+                await updateData((d) => {
+                  const p = d.programs.find((x) => x.id === program.id);
+                  if (p) p.archived = !p.archived;
+                });
+                toast(
+                  program.archived
+                    ? "Program restored"
+                    : "Program archived; scheduled sessions are preserved",
+                );
+                onClose();
+              }}
+            >
+              {program.archived ? "Restore program" : "Archive program"}
+            </button>
+            <button
+              type="button"
+              className="btn danger"
+              onClick={() => setDeleting(true)}
+            >
+              <Trash2 size={17} /> Delete program
+            </button>
+          </>
+        )}
+      </form>
+      {deleting && (
+        <DeleteProgramReview
+          program={program}
+          onCancel={() => setDeleting(false)}
+          onDeleted={onClose}
+        />
       )}
-    </form>
+    </>
   );
 }

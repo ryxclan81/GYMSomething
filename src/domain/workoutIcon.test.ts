@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defaultData } from "../data/defaults";
+import { starterPresetData as defaultData } from "../data/defaults";
 import { getWorkoutIconData, muscleRegion } from "./workoutIcon";
 import type { Exercise, Prescription, Template } from "./types";
 

@@ -1,4 +1,12 @@
-import { HelpToggle, HelpText } from "../components/Help";
+import ReorderList from "../components/ReorderList";
+import {
+  circuitElapsedMs,
+  circuitRoundStats,
+  correctCircuitHistory,
+  removeCircuitRecord,
+} from "../domain/circuit";
+import { CircuitWorkout } from "../components/CircuitWorkout";
+import { HelpButton, HelpText } from "../components/Help";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -138,6 +146,7 @@ export default function Workout({
   const session = history
     ? (data.sessions.find((s) => s.id === supplied.id) ?? supplied)
     : (data.activeSession ?? supplied);
+  const circuitHistory = history && Boolean(session.circuit);
   const [now, setNow] = useState(Date.now());
   const [add, setAdd] = useState(false),
     [finish, setFinish] = useState(false),
@@ -154,9 +163,10 @@ export default function Workout({
   const speechStop = useRef<(() => void) | null>(null);
   const rang = useRef(false);
   const timedRang = useRef<string | null>(null);
-  const focused = session.exercises.find(
-    (e) => e.id === session.focusedExerciseId,
-  );
+  const focused =
+    !session.circuit || history
+      ? session.exercises.find((e) => e.id === session.focusedExerciseId)
+      : undefined;
   const focusedIndex = focused
     ? session.exercises.findIndex((e) => e.id === focused.id)
     : -1;
@@ -206,28 +216,42 @@ export default function Workout({
     }
     if (rest > 0) rang.current = false;
   }, [rest, session.restEndsAt]);
-  function edit(change: (s: Session) => void) {
-    return updateData((d) => {
-      const target = history
-        ? d.sessions.find((s) => s.id === session.id)
-        : d.activeSession;
-      if (target) {
-        change(target);
-        const timer = target.setTimer;
-        if (
-          timer &&
-          !target.exercises.some(
-            (exercise) =>
-              exercise.id === timer.exerciseId &&
-              exercise.sets.some(
-                (set) =>
-                  set.id === timer.setId && !set.completed && !set.skipped,
-              ),
+  async function edit(change: (s: Session) => void) {
+    try {
+      await updateData((d) => {
+        let target = history
+          ? d.sessions.find((s) => s.id === session.id)
+          : d.activeSession;
+        if (target) {
+          if (history && target.circuit) {
+            target = correctCircuitHistory(target, change);
+            const index = d.sessions.findIndex(
+              (saved) => saved.id === target!.id,
+            );
+            if (index >= 0) d.sessions[index] = target;
+          } else change(target);
+          const timer = target.setTimer;
+          if (
+            timer &&
+            !target.exercises.some(
+              (exercise) =>
+                exercise.id === timer.exerciseId &&
+                exercise.sets.some(
+                  (set) =>
+                    set.id === timer.setId && !set.completed && !set.skipped,
+                ),
+            )
           )
-        )
-          target.setTimer = undefined;
-      }
-    }).catch(() => {});
+            target.setTimer = undefined;
+        }
+      });
+    } catch (error) {
+      toast(
+        error instanceof Error
+          ? error.message
+          : "Your workout edit could not be saved.",
+      );
+    }
   }
   function focusExercise(exerciseId?: string) {
     setTechnique(false);
@@ -334,6 +358,13 @@ export default function Workout({
     if (!set.completed && data.profile.celebrations) navigator.vibrate?.(20);
   }
   function addExercise(exercise: Exercise) {
+    if (circuitHistory) {
+      setAdd(false);
+      toast(
+        "Start a new circuit to add movements. Recorded history keeps its original rounds.",
+      );
+      return;
+    }
     void edit((s) => {
       s.exercises.push(makeSessionExercise(exercise));
       s.focusedExerciseId = undefined;
@@ -342,6 +373,13 @@ export default function Workout({
     toast(`${exercise.name} added`);
   }
   function replaceExercise(exercise: Exercise) {
+    if (circuitHistory) {
+      setReplace(null);
+      toast(
+        "Start a new circuit to substitute movements. Recorded history keeps its original rounds.",
+      );
+      return;
+    }
     void edit((s) => {
       const i = s.exercises.findIndex((e) => e.id === replace);
       if (i < 0) return;
@@ -392,7 +430,11 @@ export default function Workout({
         e.sets.some((s) => s.completed && !s.skipped),
       )
     ) {
-      toast("Complete at least one set before saving.");
+      toast(
+        session.circuit
+          ? "Record at least one circuit movement before saving."
+          : "Complete at least one set before saving.",
+      );
       return;
     }
     for (const e of session.exercises) {
@@ -521,6 +563,12 @@ export default function Workout({
       return;
     }
     if (parsed.kind === "add-set") {
+      if (circuitHistory) {
+        toast(
+          "Circuit history keeps its recorded rounds. Correct an existing record instead.",
+        );
+        return;
+      }
       void edit((s) => {
         s.exercises
           .find((x) => x.id === e.id)
@@ -569,6 +617,113 @@ export default function Workout({
   const equipment = data.equipment.find(
     (e) => e.id === data.activeEquipmentId,
   )!;
+  const finishSheet = finish && (
+    <Sheet
+      title={history ? "Save workout corrections" : "You showed up."}
+      onClose={() => setFinish(false)}
+    >
+      <p className="muted">
+        {stats.sets} {session.circuit ? "recorded movements" : "completed sets"}{" "}
+        · {stats.reps} reps ·{" "}
+        {Math.round(fromKg(stats.volume, data.profile.unit)).toLocaleString()}{" "}
+        {data.profile.unit} external volume
+      </p>
+      <p className="small muted">
+        Unrecorded targets are retained in your history and excluded from
+        totals.
+      </p>
+      <Field label="Workout name">
+        <input
+          value={session.name}
+          onChange={(e) => {
+            void edit((s) => {
+              s.name = e.target.value.slice(0, 100);
+            });
+          }}
+        />
+      </Field>
+      <Field label="Session note">
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="How did it feel?"
+        />
+      </Field>
+      <Field label="Session difficulty (1–10)">
+        <input
+          type="range"
+          min="1"
+          max="10"
+          value={difficulty}
+          onChange={(e) => setDifficulty(Number(e.target.value))}
+        />
+        <span>{difficulty}/10</span>
+      </Field>
+      <Field label="Context">
+        <Select
+          value={annotation}
+          onChange={(e) => setAnnotation(e.target.value)}
+        >
+          <option value="">No context</option>
+          {[
+            "Poor sleep",
+            "Low energy",
+            "Illness",
+            "Travel",
+            "Incomplete session",
+            "Equipment change",
+            "Maintaining performance",
+          ].map((x) => (
+            <option key={x}>{x}</option>
+          ))}
+        </Select>
+      </Field>
+      <Button
+        className="full"
+        onClick={() => {
+          void save();
+        }}
+      >
+        Save workout
+      </Button>
+    </Sheet>
+  );
+  if (session.circuit && !history)
+    return (
+      <div className="page workout-page workout-circuit">
+        <CircuitWorkout
+          session={session}
+          now={now}
+          unit={data.profile.unit}
+          onBack={onBack}
+          onFinish={() => setFinish(true)}
+          onEdit={(change) =>
+            updateData((d) => {
+              if (d.activeSession?.id === session.id) change(d.activeSession);
+            })
+          }
+        />
+        <Button
+          variant="ghost"
+          className="full"
+          onClick={() => {
+            if (
+              window.confirm(
+                "Discard this active circuit and its recorded movements? Completed workout history will stay saved.",
+              )
+            )
+              void updateData((d) => {
+                if (d.activeSession?.id === session.id) d.activeSession = null;
+              })
+                .then(onBack)
+                .catch(() => toast("Could not discard the circuit."));
+          }}
+        >
+          Discard workout
+        </Button>
+        {finishSheet}
+      </div>
+    );
   return (
     <div
       className={`page workout-page ${focused ? "workout-focused" : "workout-overview"}`}
@@ -590,7 +745,12 @@ export default function Workout({
                   1000,
               )}
             </span>
-            <HelpToggle compact className="icon-btn" />
+            <HelpButton
+              compact
+              className="icon-btn"
+              helpTitle="Workout logging"
+              description="Adjust each set to the repetitions, load or duration you actually complete. Tap the checkmark to record it. Options contains set categories, substitutions and exercise controls."
+            />
           </header>
           <div className="focus-session-label">
             <span className="eyebrow">
@@ -661,7 +821,7 @@ export default function Workout({
       ) : (
         <>
           <div className="workout-top">
-            <IconButton label="Back to Train" onClick={onBack}>
+            <IconButton label="Back to workout selection" onClick={onBack}>
               <ArrowLeft size={22} />
             </IconButton>
             <span className="eyebrow">
@@ -681,6 +841,27 @@ export default function Workout({
             <span>·</span>
             <span>{remaining} remaining</span>
           </div>
+          {history && session.circuit && (
+            <div className="circuit-summary" aria-label="Saved circuit summary">
+              <p>
+                <strong>{circuitRoundStats(session).completed}</strong> complete
+                rounds
+              </p>
+              <p>
+                <strong>{circuitRoundStats(session).partial}</strong> partial
+                rounds
+              </p>
+              <p>
+                {formatTime(circuitElapsedMs(session.circuit) / 1000)} active
+                circuit time
+              </p>
+              <p className="small muted">
+                Recorded rounds keep their original movements. You can correct
+                actual reps, loads or durations, remove records, and reorder
+                movements. Start a new circuit to add or substitute movements.
+              </p>
+            </div>
+          )}
           {session.exercises.length > 0 && (
             <section
               className="workout-overview-list"
@@ -690,62 +871,83 @@ export default function Workout({
                 <h2>Your exercises</h2>
                 <span className="muted small">Tap a movement to log sets</span>
               </div>
-              {session.exercises.map((entry, index) => {
-                const completed = entry.sets.filter(
-                  (s) => s.completed && !s.skipped,
-                ).length;
-                const unfinished = entry.sets.filter(
-                  (s) => !s.completed && !s.skipped,
-                ).length;
-                const skipped =
-                  entry.sets.length > 0 && entry.sets.every((s) => s.skipped);
-                const done = completed > 0 && unfinished === 0;
-                const timed =
-                  entry.exercise.measurement === "duration" ||
-                  entry.exercise.measurement === "cardio";
-                return (
-                  <button
-                    className={`workout-overview-card ${done ? "done" : ""} ${skipped ? "skipped" : ""}`}
-                    key={entry.id}
-                    aria-label={`Open ${entry.exercise.name}`}
-                    onClick={() => focusExercise(entry.id)}
-                  >
-                    <span className="overview-exercise-number">
-                      {done ? (
-                        <Check size={18} />
-                      ) : (
-                        String(index + 1).padStart(2, "0")
-                      )}
-                    </span>
-                    <span className="overview-exercise-body">
-                      <span className="overview-exercise-status">
-                        <span className="eyebrow">
-                          {entry.prescription.group || entry.exercise.category}
+              <ReorderList
+                items={session.exercises}
+                getId={(entry) => entry.id}
+                getLabel={(entry) => entry.exercise.name}
+                ariaLabel="Reorder workout exercises"
+                className="workout-reorder-list"
+                onReorder={(items) => {
+                  void edit((draft) => {
+                    const entries = new Map(
+                      draft.exercises.map((entry) => [entry.id, entry]),
+                    );
+                    draft.exercises = items
+                      .map((item) => entries.get(item.id)!)
+                      .filter(Boolean);
+                  });
+                }}
+                renderItem={(entry, index, handle) => {
+                  const completed = entry.sets.filter(
+                    (s) => s.completed && !s.skipped,
+                  ).length;
+                  const unfinished = entry.sets.filter(
+                    (s) => !s.completed && !s.skipped,
+                  ).length;
+                  const skipped =
+                    entry.sets.length > 0 && entry.sets.every((s) => s.skipped);
+                  const done = completed > 0 && unfinished === 0;
+                  const timed =
+                    entry.exercise.measurement === "duration" ||
+                    entry.exercise.measurement === "cardio";
+                  return (
+                    <div className="workout-reorder-row">
+                      {handle}
+                      <button
+                        className={`workout-overview-card ${done ? "done" : ""} ${skipped ? "skipped" : ""}`}
+                        key={entry.id}
+                        aria-label={`Open ${entry.exercise.name}`}
+                        onClick={() => focusExercise(entry.id)}
+                      >
+                        <span className="overview-exercise-number">
+                          {done ? (
+                            <Check size={18} />
+                          ) : (
+                            String(index + 1).padStart(2, "0")
+                          )}
                         </span>
-                        <span>
-                          {skipped
-                            ? "Skipped"
-                            : done
-                              ? "Complete"
-                              : completed > 0
-                                ? `${completed}/${entry.sets.length} sets logged`
-                                : "Ready"}
+                        <span className="overview-exercise-body">
+                          <span className="overview-exercise-status">
+                            <span className="eyebrow">
+                              {entry.prescription.group ||
+                                entry.exercise.category}
+                            </span>
+                            <span>
+                              {skipped
+                                ? "Skipped"
+                                : done
+                                  ? "Complete"
+                                  : completed > 0
+                                    ? `${completed}/${entry.sets.length} sets logged`
+                                    : "Ready"}
+                            </span>
+                          </span>
+                          <strong>{entry.exercise.name}</strong>
+                          <MuscleLabels exercise={entry.exercise} />
+                          <span className="overview-exercise-target">
+                            {entry.sets.length} sets <i />{" "}
+                            {timed
+                              ? `${formatTime(entry.prescription.durationSeconds)} target`
+                              : `${entry.prescription.repMin}–${entry.prescription.repMax} reps`}{" "}
+                            <i /> {entry.prescription.restSeconds}s rest
+                          </span>
                         </span>
-                      </span>
-                      <strong>{entry.exercise.name}</strong>
-                      <MuscleLabels exercise={entry.exercise} />
-                      <span className="overview-exercise-target">
-                        {entry.sets.length} sets <i />{" "}
-                        {timed
-                          ? `${formatTime(entry.prescription.durationSeconds)} target`
-                          : `${entry.prescription.repMin}–${entry.prescription.repMax} reps`}{" "}
-                        <i /> {entry.prescription.restSeconds}s rest
-                      </span>
-                    </span>
-                    <ChevronRight size={19} />
-                  </button>
-                );
-              })}
+                        <ChevronRight size={19} />
+                      </button>
+                    </div>
+                  );
+                }}
+              />
             </section>
           )}
         </>
@@ -1072,6 +1274,7 @@ export default function Workout({
               ))}
               <div className="set-footer">
                 <button
+                  disabled={circuitHistory}
                   className="text-btn"
                   onClick={() => {
                     void edit((s) => {
@@ -1131,6 +1334,7 @@ export default function Workout({
         <Button
           variant="secondary"
           className="full"
+          disabled={circuitHistory}
           onClick={() => setAdd(true)}
         >
           <Plus size={18} /> Add exercise
@@ -1402,83 +1606,13 @@ export default function Workout({
           </div>
         </Sheet>
       )}
-      {finish && (
-        <Sheet
-          title={history ? "Save workout corrections" : "You showed up."}
-          onClose={() => setFinish(false)}
-        >
-          <p className="muted">
-            {stats.sets} completed sets · {stats.reps} reps ·{" "}
-            {Math.round(
-              fromKg(stats.volume, data.profile.unit),
-            ).toLocaleString()}{" "}
-            {data.profile.unit} external volume
-          </p>
-          <p className="small muted">
-            Unfinished sets are retained in your history and excluded from
-            totals.
-          </p>
-          <Field label="Workout name">
-            <input
-              value={session.name}
-              onChange={(e) => {
-                void edit((s) => {
-                  s.name = e.target.value.slice(0, 100);
-                });
-              }}
-            />
-          </Field>
-          <Field label="Session note">
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="How did it feel?"
-            />
-          </Field>
-          <Field label="Session difficulty (1–10)">
-            <input
-              type="range"
-              min="1"
-              max="10"
-              value={difficulty}
-              onChange={(e) => setDifficulty(Number(e.target.value))}
-            />
-            <span>{difficulty}/10</span>
-          </Field>
-          <Field label="Context">
-            <Select
-              value={annotation}
-              onChange={(e) => setAnnotation(e.target.value)}
-            >
-              <option value="">No context</option>
-              {[
-                "Poor sleep",
-                "Low energy",
-                "Illness",
-                "Travel",
-                "Incomplete session",
-                "Equipment change",
-                "Maintaining performance",
-              ].map((x) => (
-                <option key={x}>{x}</option>
-              ))}
-            </Select>
-          </Field>
-          <Button
-            className="full"
-            onClick={() => {
-              void save();
-            }}
-          >
-            Save workout
-          </Button>
-        </Sheet>
-      )}
+      {finishSheet}
       {selected && (
         <Sheet title={selected.exercise.name} onClose={() => setActions(null)}>
           <div className="stack">
             <Button
               variant="secondary"
+              disabled={circuitHistory}
               onClick={() => {
                 setReplace(selected.id);
                 setActions(null);
@@ -1587,11 +1721,19 @@ export default function Workout({
                   <ChevronUp size={17} />
                 </IconButton>
                 <IconButton
-                  label={`Delete set ${i + 1}`}
+                  label={
+                    circuitHistory
+                      ? `Remove record from round ${set.circuitRound}`
+                      : `Delete set ${i + 1}`
+                  }
+                  disabled={circuitHistory && !set.completed}
                   onClick={() => {
                     void edit((s) => {
                       const ex = s.exercises.find((x) => x.id === selected.id);
-                      if (ex) ex.sets = ex.sets.filter((x) => x.id !== set.id);
+                      if (s.circuit)
+                        removeCircuitRecord(s, selected.id, set.id);
+                      else if (ex)
+                        ex.sets = ex.sets.filter((x) => x.id !== set.id);
                     });
                   }}
                 >
@@ -1620,19 +1762,28 @@ export default function Workout({
                 if (
                   selected.sets.some((x) => x.completed) &&
                   !window.confirm(
-                    "Remove this exercise and its completed sets from this session?",
+                    circuitHistory
+                      ? `Remove all recorded ${selected.exercise.name} work from this circuit? Its original round slots and other movements will stay saved.`
+                      : "Remove this exercise and its completed sets from this session?",
                   )
                 )
                   return;
                 void edit((s) => {
-                  s.exercises = s.exercises.filter((x) => x.id !== selected.id);
+                  if (s.circuit)
+                    selected.sets.forEach((set) =>
+                      removeCircuitRecord(s, selected.id, set.id),
+                    );
+                  else
+                    s.exercises = s.exercises.filter(
+                      (x) => x.id !== selected.id,
+                    );
                   if (s.focusedExerciseId === selected.id)
                     s.focusedExerciseId = undefined;
                 });
                 setActions(null);
               }}
             >
-              Remove exercise
+              {circuitHistory ? "Remove movement records" : "Remove exercise"}
             </Button>
           </div>
         </Sheet>
